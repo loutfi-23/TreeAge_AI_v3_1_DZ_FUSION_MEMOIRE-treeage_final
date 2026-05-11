@@ -20,7 +20,10 @@ from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 from bson import ObjectId
 from bson.errors import InvalidId
+from flask import Flask
 import os
+
+app = Flask(__name__)
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 app.config["SECRET_KEY"] = SECRET_KEY
