@@ -767,5 +767,5 @@ if __name__=="__main__":
     print("╚══════════════════════════════════════════════════════╝")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT",5001)),
             debug=os.environ.get("FLASK_DEBUG","false").lower()=="true")
-    if __name__ == '__main__':
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
