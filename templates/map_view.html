@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TreeAge AI - Map View</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #2c3e50;
+            color: white;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .sidebar p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .sidebar hr {
+            opacity: 0.2;
+        }
+
+        .sidebar nav {
+            margin-top: 20px;
+        }
+
+        .sidebar nav a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            transition: 0.2s;
+        }
+
+        .sidebar nav a:hover {
+            background: #34495e;
+        }
+
+        .sidebar nav a.active {
+            background: #3498db;
+        }
+
+        .sidebar nav a.logout {
+            color: #ff7675;
+            margin-top: auto;
+        }
+
+        .main {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            margin-bottom: 15px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 15px;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #2980b9;
+        }
+
+        .header h3 {
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+
+        #map {
+            flex: 1;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .info-text {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>🌳 TreeAge AI</h2>
+    <p>User: <b>{{ user.name }}</b></p>
+    <p>Role: <b>{{ user.role }}</b></p>
+
+    <hr>
+
+    <nav>
+        <a href="/dashboard">📊 Dashboard</a>
+        <a href="/map_view" class="active">📍 Map View</a>
+        {% if user.role == 'admin' %}
+            <a href="/admin">👑 Admin Panel</a>
+        {% endif %}
+        <a href="/about">👤 À Propos</a>
+    <a href="/logout" class="logout">🚪 Logout</a>
+    </nav>
+
+    <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <small>Master's Thesis 2026</small><br>
+        <small>TreeAge AI System</small>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="header">
+        <a href="/dashboard" class="back-btn">← Back to Dashboard</a>
+        <h3>📍 Tree Locations Map</h3>
+        <p class="info-text">Interactive map showing all analyzed trees with their estimated ages and GPS coordinates.</p>
+    </div>
+
+    <div id="map"></div>
+</div>
+
+<!-- GOOGLE MAPS -->
+<script>
+function initMap() {
+    const trees = {{ trees | tojson | safe }} || [];
+
+    // Default center (Sétif, Algeria)
+    const startPos = trees.length > 0 && trees[0].location
+        ? {
+            lat: parseFloat(trees[0].location.lat),
+            lng: parseFloat(trees[0].location.lng)
+          }
+        : { lat: 36.19, lng: 5.41 };
+
+    const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: startPos,
+        mapTypeId: "hybrid",
+        styles: [
+            {
+                featureType: "all",
+                stylers: [{ saturation: -0.2 }]
+            }
+        ]
+    });
+
+    const infoWindow = new google.maps.InfoWindow();
+
+    // Add markers for each tree
+    trees.forEach((tree, idx) => {
+        if (!tree.location || !tree.location.lat || !tree.location.lng) return;
+
+        const lat = parseFloat(tree.location.lat);
+        const lng = parseFloat(tree.location.lng);
+
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const marker = new google.maps.Marker({
+            position: { lat: lat, lng: lng },
+            map: map,
+            title: `Tree #${idx + 1}`,
+            icon: getMarkerIcon(tree.estimated_age)
+        });
+
+        marker.addListener("click", () => {
+            infoWindow.setContent(`
+                <div style="color:#333; font-family: sans-serif; padding: 10px; min-width: 250px;">
+                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🌳 Tree Analysis #${idx + 1}</h4>
+                    <table style="width: 100%; font-size: 13px;">
+                        <tr>
+                            <td style="padding: 5px 0;"><b>Estimated Age:</b></td>
+                            <td style="padding: 5px 0; text-align: right;"><strong style="color: #27ae60;">${tree.estimated_age} years</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;"><b>Diameter:</b></td>
+                            <td style="padding: 5px 0; text-align: right;">${tree.diameter_cm} cm</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;"><b>Confidence:</b></td>
+                            <td style="padding: 5px 0; text-align: right;">${(tree.confidence * 100).toFixed(1)}%</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;"><b>Date:</b></td>
+                            <td style="padding: 5px 0; text-align: right;">${tree.date || 'N/A'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px 0;"><b>GPS:</b></td>
+                            <td style="padding: 5px 0; text-align: right;">${lat.toFixed(4)}, ${lng.toFixed(4)}</td>
+                        </tr>
+                    </table>
+                </div>
+            `);
+            infoWindow.open(map, marker);
+        });
+    });
+
+    // Center and zoom to fit all markers
+    if (trees.length > 1) {
+        const bounds = new google.maps.LatLngBounds();
+        trees.forEach(tree => {
+            if (tree.location && tree.location.lat && tree.location.lng) {
+                bounds.extend({
+                    lat: parseFloat(tree.location.lat),
+                    lng: parseFloat(tree.location.lng)
+                });
+            }
+        });
+        map.fitBounds(bounds);
+    }
+}
+
+function getMarkerIcon(age) {
+    // Color code based on age
+    if (age > 200) return 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
+    if (age > 100) return 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png';
+    if (age > 50) return 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
+    return 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
+}
+
+// Initialize map when page loads
+window.addEventListener('load', initMap);
+</script>
+
+<!-- GOOGLE MAPS API -->
+<script async
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB15glKDB5SxW3mleoDrg6e2y_AjR5PuLU">
+</script>
+
+</body>
+</html>

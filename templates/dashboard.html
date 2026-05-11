@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TreeAge AI — Tableau de bord</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --forest:#0d1f14;--forest2:#1a3325;--accent:#2d5a3d;
+      --leaf:#4ade80;--leaf2:#86efac;--amber:#d97706;
+      --sky:#38bdf8;--ink:#0f172a;--mist:#64748b;
+      --canvas:#f1f5f4;--card:#fff;--border:#e2e8f0;
+      --shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--ink);display:flex;min-height:100vh}
+
+    /* Sidebar */
+    .sidebar{width:240px;background:var(--forest);color:#cbd5e1;position:fixed;
+             height:100vh;display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+    .sb-brand{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+    .sb-logo{font-family:'DM Serif Display',serif;font-size:19px;color:var(--leaf);display:flex;align-items:center;gap:8px}
+    .sb-sub{font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);margin-top:3px;letter-spacing:1px;text-transform:uppercase}
+    .sb-nav{flex:1;padding:10px}
+    .sb-section{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;
+                color:#475569;padding:12px 8px 5px}
+    .nav-link{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;color:#94a3b8;
+              text-decoration:none;font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px}
+    .nav-link:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
+    .nav-link.active{background:rgba(74,222,128,.12);color:var(--leaf)}
+    .nav-link.logout{color:#f87171}
+    .nav-link.logout:hover{background:rgba(248,113,113,.1)}
+    .sb-footer{padding:12px 18px;border-top:1px solid rgba(255,255,255,.07)}
+    .plan-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;
+                font-size:10px;font-family:'DM Mono',monospace;text-transform:uppercase}
+    .plan-free{background:rgba(100,116,139,.2);color:#94a3b8}
+    .plan-researcher{background:rgba(59,130,246,.2);color:#93c5fd}
+    .plan-enterprise{background:rgba(139,92,246,.2);color:#c4b5fd}
+    .plan-admin{background:rgba(74,222,128,.2);color:var(--leaf)}
+
+    /* Main */
+    .main{margin-left:240px;flex:1;display:flex;flex-direction:column}
+    .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:13px 26px;
+            display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .page-title{font-family:'DM Serif Display',serif;font-size:19px;color:var(--forest)}
+    .quota-pill{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mist);
+                background:var(--canvas);padding:5px 13px;border-radius:20px;border:1px solid var(--border)}
+    .quota-bar{width:70px;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+    .quota-fill{height:100%;background:var(--leaf);border-radius:3px;transition:width .4s}
+    .content{padding:22px 26px;flex:1}
+
+    /* Flash */
+    .flash{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+    .flash.success{background:#dcfce7;color:#15803d;border-left:4px solid #4ade80}
+    .flash.error{background:#fee2e2;color:#dc2626;border-left:4px solid #ef4444}
+
+    /* KPI */
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+    .kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;
+         box-shadow:var(--shadow);position:relative;overflow:hidden}
+    .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .kpi.k-green::before{background:var(--leaf)}
+    .kpi.k-amber::before{background:var(--amber)}
+    .kpi.k-blue::before{background:var(--sky)}
+    .kpi.k-purple::before{background:#a78bfa}
+    .kpi-icon{font-size:24px;margin-bottom:8px}
+    .kpi-val{font-family:'DM Serif Display',serif;font-size:30px;color:var(--ink);line-height:1}
+    .kpi-label{font-size:11px;color:var(--mist);margin-top:3px;font-weight:500}
+
+    /* Upload */
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:10px;
+           padding:22px;margin-bottom:20px;box-shadow:var(--shadow)}
+    .panel-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--forest);margin-bottom:16px}
+    .upload-zone{border:2px dashed var(--border);border-radius:8px;padding:26px;text-align:center;
+                 transition:all .2s;cursor:pointer;background:var(--canvas)}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:var(--leaf);background:rgba(74,222,128,.04)}
+    .upload-icon{font-size:34px;margin-bottom:8px}
+    .upload-text{font-size:13px;color:var(--mist)}
+    .upload-sub{font-size:11px;color:#94a3b8;margin-top:4px}
+    #imageInput{display:none}
+    .preview-box{display:none;position:relative;margin-top:12px}
+    #imagePreview{max-height:180px;border-radius:8px;max-width:100%;object-fit:cover}
+    .preview-remove{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);
+                    color:#fff;border:none;border-radius:50%;width:24px;height:24px;
+                    cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+
+    /* GPS manual */
+    .gps-manual{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .gps-manual input{padding:9px 12px;border:1px solid var(--border);border-radius:7px;
+                       font-size:13px;color:var(--ink);outline:none;transition:.2s;width:100%}
+    .gps-manual input:focus{border-color:var(--leaf)}
+    .gps-label{font-size:11px;color:var(--mist);margin-bottom:4px;font-weight:600;text-transform:uppercase;font-family:'DM Mono',monospace}
+    .gps-note{font-size:11px;color:#94a3b8;grid-column:span 2;margin-top:2px}
+
+    .analyze-btn{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;
+                 border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;
+                 margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+    .analyze-btn:hover{background:#1f4730}
+    .analyze-btn:disabled{opacity:.6;cursor:not-allowed}
+
+    /* Species chips */
+    .species-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+    .sp-chip{background:var(--canvas);border:1px solid var(--border);border-radius:7px;padding:10px;
+             display:flex;align-items:center;gap:7px;font-size:12px}
+    .sp-emoji{font-size:17px}
+    .sp-info{flex:1}
+    .sp-name{font-weight:600;font-size:11.5px}
+    .sp-rate{font-size:10px;font-family:'DM Mono',monospace;margin-top:1px}
+    .sp-bar{height:3px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden}
+    .sp-fill{height:100%;border-radius:2px}
+
+    /* Climate widget */
+    .climate-widget{background:linear-gradient(135deg,var(--forest),var(--forest2));
+                    border-radius:10px;padding:18px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden}
+    .climate-widget::before{content:'🌍';position:absolute;right:-8px;top:-8px;font-size:72px;opacity:.07}
+    .cw-title{font-family:'DM Serif Display',serif;font-size:14px;color:var(--leaf2);margin-bottom:12px}
+    .cw-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .cw-item{background:rgba(255,255,255,.06);border-radius:7px;padding:10px;border:1px solid rgba(255,255,255,.08)}
+    .cw-icon{font-size:16px;margin-bottom:4px}
+    .cw-val{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:var(--leaf)}
+    .cw-label{font-size:10px;color:#94a3b8;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+    .zone-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(74,222,128,.15);
+                border:1px solid rgba(74,222,128,.3);color:var(--leaf);padding:4px 11px;
+                border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;margin-bottom:12px}
+    .gf-bar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-top:8px}
+    .gf-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--amber),var(--leaf));transition:width .8s}
+
+    /* Table */
+    .table-panel{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
+    .table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    table{width:100%;border-collapse:collapse}
+    th{padding:10px 14px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;
+       font-weight:500;color:var(--mist);letter-spacing:.5px;text-transform:uppercase;
+       background:#f8fafc;border-bottom:1px solid var(--border)}
+    td{padding:11px 14px;font-size:12.5px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f8fafb}
+    .sp-cell{display:flex;align-items:center;gap:6px}
+    .age-big{font-family:'DM Serif Display',serif;font-size:17px}
+    .conf-bar{display:flex;align-items:center;gap:5px}
+    .conf-track{width:46px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .conf-fill{height:100%;background:var(--leaf);border-radius:2px}
+    .gr-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:'DM Mono',monospace}
+    .status-v{background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:12px;font-size:10px}
+    .status-p{background:#fef9c3;color:#a16207;padding:3px 8px;border-radius:12px;font-size:10px}
+    .gps-coord{font-size:10px;color:var(--mist);font-family:'DM Mono',monospace}
+    .btn-act{padding:4px 9px;border-radius:5px;border:none;cursor:pointer;font-size:10.5px;font-weight:500;transition:all .15s;margin-left:4px}
+    .btn-val{background:#dbeafe;color:#1d4ed8}.btn-val:hover{background:#bfdbfe}
+    .btn-del{background:#fee2e2;color:#dc2626}.btn-del:hover{background:#fecaca}
+
+    /* Modal */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
+                   backdrop-filter:blur(4px);align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal-box{background:#fff;border-radius:14px;width:460px;max-width:95vw;
+               box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;animation:mIn .2s ease-out}
+    @keyframes mIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:none}}
+    .modal-head{background:var(--forest);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+    .modal-head h3{font-family:'DM Serif Display',serif;font-size:16px;color:var(--leaf2)}
+    .modal-close{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px}
+    .modal-body{padding:20px}
+    .form-group{margin-bottom:14px}
+    .form-label{display:block;font-size:11px;font-weight:600;color:var(--ink);margin-bottom:5px;
+                font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.3px}
+    .form-input{width:100%;padding:10px 13px;border:1px solid var(--border);border-radius:7px;
+                font-size:13px;outline:none;transition:.2s}
+    .form-input:focus{border-color:var(--leaf)}
+    .form-input.ro{background:#f8fafc}
+    .btn-submit{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;
+                border-radius:7px;font-size:13px;font-weight:600;cursor:pointer}
+    .btn-submit:hover{background:#1f4730}
+
+    /* Export */
+    .export-btn{background:var(--canvas);border:1px solid var(--border);color:var(--mist);
+                padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:.15s}
+    .export-btn:hover{background:var(--border);color:var(--ink)}
+
+    /* Admin badge */
+    .admin-notice{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);
+                  color:#15803d;padding:8px 14px;border-radius:8px;font-size:12px;margin-bottom:16px}
+
+    @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.cw-row{grid-template-columns:repeat(2,1fr)}.species-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:640px){.sidebar{display:none}.main{margin-left:0}}
+  </style>
+</head>
+<body>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo"><span>🌳</span>TreeAge AI</div>
+    <div class="sb-sub">DZ Edition · v3.1</div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">Navigation</div>
+    <a class="nav-link active" href="/dashboard"><span>📊</span>Tableau de bord</a>
+    <a class="nav-link" href="/map_view"><span>📍</span>Carte GPS</a>
+    <a class="nav-link" href="/saas/plans"><span>💎</span>Plans & Tarifs</a>
+    <a class="nav-link" href="/memoire"><span>📘</span>Mémoire (Master 2)</a>
+    {% if user.role == 'admin' %}
+    <div class="sb-section">Administration</div>
+    <a class="nav-link" href="/admin"><span>⚙️</span>Admin Dashboard</a>
+    <a class="nav-link" href="/admin/users"><span>👥</span>Gestion Utilisateurs</a>
+    <a class="nav-link" href="/admin/validations"><span>✓</span>Validations</a>
+    {% endif %}
+    <div class="sb-section">Compte</div>
+    <a class="nav-link logout" href="/logout"><span>🚪</span>Déconnexion</a>
+  </div>
+  <div class="sb-footer">
+    <div id="planBadge" class="plan-badge plan-free">● Gratuit</div>
+    <div style="font-size:11px;color:#475569;margin-top:6px">{{ user.email }}</div>
+    <div style="font-size:10px;color:#334155;margin-top:2px">{{ user.name }}</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title">📊 Tableau de bord</div>
+    <div class="quota-pill">
+      <div class="quota-bar"><div class="quota-fill" id="quotaFill" style="width:10%"></div></div>
+      <span id="quotaText" style="font-size:11px">—</span>
+    </div>
+  </div>
+  <div class="content">
+
+    {% if user.role == 'admin' %}
+    <div class="admin-notice">👑 Mode Admin — Vous voyez toutes les prédictions · Quota illimité · Validation activée</div>
+    {% endif %}
+
+    <!-- Flash messages -->
+    {% for msg in messages %}
+    <div class="flash {{ msg.category }}">{{ msg.message }}</div>
+    {% endfor %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="kpi k-green">
+        <div class="kpi-icon">🌳</div>
+        <div class="kpi-val">{{ estimations|length }}</div>
+        <div class="kpi-label">{{ 'Total analyses (tous)' if user.role=='admin' else 'Mes analyses' }}</div>
+      </div>
+      <div class="kpi k-amber">
+        <div class="kpi-icon">✓</div>
+        <div class="kpi-val">{{ estimations | selectattr('is_validated') | list | length }}</div>
+        <div class="kpi-label">Validées</div>
+      </div>
+      <div class="kpi k-blue">
+        <div class="kpi-icon">📍</div>
+        <div class="kpi-val">{{ estimations | selectattr('location') | list | length }}</div>
+        <div class="kpi-label">Avec GPS</div>
+      </div>
+      <div class="kpi k-purple">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-val">
+          {% set ages = estimations | map(attribute='estimated_age') | select('number') | list %}
+          {% if ages %}{{ (ages|sum / ages|length)|round(0,'floor')|int }}{% else %}—{% endif %}
+        </div>
+        <div class="kpi-label">Âge moyen (ans)</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+
+      <!-- UPLOAD PANEL -->
+      <div class="panel">
+        <div class="panel-title">🔬 Analyser un Arbre</div>
+        <form id="uploadForm" action="/predict" method="POST" enctype="multipart/form-data">
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('imageInput').click()">
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text">Cliquer ou glisser une photo</div>
+            <div class="upload-sub">JPEG · PNG · WebP · max 16 MB</div>
+            <input type="file" id="imageInput" name="image" accept="image/*" onchange="onFile(this)">
+          </div>
+          <div class="preview-box" id="previewBox">
+            <img id="imagePreview" src="" alt="Aperçu">
+            <button type="button" class="preview-remove" onclick="removeImg(event)">✕</button>
+          </div>
+
+          <!-- GPS Manuel -->
+          <div style="margin-top:14px">
+            <div class="gps-label">📍 Coordonnées GPS (optionnel — si image sans EXIF)</div>
+            <div class="gps-manual">
+              <div>
+                <div class="gps-label">Latitude</div>
+                <input type="number" name="latitude" id="manLat" placeholder="ex: 36.7539" step="0.000001" min="-90" max="90">
+              </div>
+              <div>
+                <div class="gps-label">Longitude</div>
+                <input type="number" name="longitude" id="manLng" placeholder="ex: 3.0589" step="0.000001" min="-180" max="180">
+              </div>
+              <div class="gps-note">Les coordonnées GPS permettent d'obtenir le contexte climatique réel (Algérie N/S/E/O)</div>
+            </div>
+          </div>
+
+          <button type="submit" class="analyze-btn" id="analyzeBtn" disabled>
+            <span id="btnSpinner" style="display:none">⏳</span>
+            <span id="btnText">🚀 Analyser l'arbre</span>
+          </button>
+        </form>
+
+        <!-- Species chips -->
+        <div style="margin-top:18px">
+          <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--mist);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">8 Espèces détectées</div>
+          <div class="species-grid" id="speciesGrid">
+            <div id="noSpMsg" style="grid-column:span 3;font-size:12px;color:var(--mist);text-align:center;padding:10px">
+              Analysez une image pour voir les probabilités
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIMATE WIDGET -->
+      <div>
+        <div class="climate-widget">
+          <div class="cw-title">🌍 Contexte Géo-Climatique Algérie</div>
+          <div class="zone-badge" id="klimatBadge">🗺 Zone Köppen — —</div>
+          <div id="regionBadge" style="font-size:11px;color:var(--leaf2);margin-bottom:10px;font-family:'DM Mono',monospace"></div>
+          <div class="cw-row">
+            <div class="cw-item"><div class="cw-icon">🌡️</div><div class="cw-val" id="cTemp">—</div><div class="cw-label">Température</div></div>
+            <div class="cw-item"><div class="cw-icon">🌧️</div><div class="cw-val" id="cRain">—</div><div class="cw-label">Pluie/an</div></div>
+            <div class="cw-item"><div class="cw-icon">🪨</div><div class="cw-val" id="cSoil">—</div><div class="cw-label">Sol</div></div>
+            <div class="cw-item"><div class="cw-icon">📈</div><div class="cw-val" id="cFactor">—</div><div class="cw-label">Facteur croissance</div></div>
+          </div>
+          <div class="gf-bar"><div class="gf-fill" id="gfFill" style="width:50%"></div></div>
+          <div id="cExplain" style="font-size:11px;color:#94a3b8;margin-top:8px"></div>
+        </div>
+
+        <!-- GPS Localisation dernier arbre -->
+        <div class="panel" id="gpsPanel" style="display:none">
+          <div class="panel-title">📍 Localisation du Dernier Arbre</div>
+          <div id="gpsInfo" style="font-size:13px;line-height:1.8;color:var(--ink)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREDICTIONS TABLE -->
+    <div class="table-panel" style="margin-top:20px">
+      <div class="table-header">
+        <span style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--forest)">
+          {{ '🌳 Toutes les Analyses' if user.role=='admin' else '🌳 Mes Analyses' }}
+        </span>
+        <button class="export-btn" onclick="exportCsv()">⬇ CSV</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Espèce</th>
+              <th>Âge estimé</th>
+              <th>Diamètre</th>
+              <th>Confiance</th>
+              <th>Croissance</th>
+              <th>Climat / Zone</th>
+              <th>GPS</th>
+              {% if user.role == 'admin' %}<th>Utilisateur</th>{% endif %}
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          {% if estimations %}
+            {% for e in estimations %}
+            <tr data-id="{{ e._id }}"
+                data-species="{{ e.species }}"
+                data-age="{{ e.estimated_age }}"
+                data-conf="{{ e.confidence }}"
+                data-temp="{{ e.temperature_c or '' }}"
+                data-rain="{{ e.annual_rainfall_mm or '' }}"
+                data-soil="{{ e.soil_label_fr or '' }}"
+                data-factor="{{ e.climate_growth_factor or '' }}"
+                data-zone="{{ e.climate_zone or '' }}"
+                data-zone-label="{{ e.climate_zone_label or '' }}"
+                data-region="{{ e.algeria_region or '' }}"
+                data-lat="{{ (e.location.lat if e.location else '') or '' }}"
+                data-lng="{{ (e.location.lng if e.location else '') or '' }}">
+              <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--mist)">
+                {{ e.date | datefmt if e.date else '—' }}
+              </td>
+              <td>
+                <div class="sp-cell">
+                  <span style="font-size:16px">{{ e.species_emoji or '🌲' }}</span>
+                  <div>
+                    <div style="font-weight:600;font-size:12px">{{ e.species_common_fr or e.species }}</div>
+                    <div style="font-size:10px;color:var(--mist);font-style:italic">{{ e.species_latin or '' }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="age-big">{{ e.corrected_age if e.corrected_age else e.estimated_age }} ans</div>
+                {% if e.corrected_age and e.corrected_age != e.estimated_age %}
+                <div style="font-size:10px;color:var(--mist);font-family:'DM Mono',monospace">orig: {{ e.estimated_age }}</div>
+                {% endif %}
+              </td>
+              <td style="font-family:'DM Mono',monospace">{{ e.diameter_cm }} cm</td>
+              <td>
+                <div class="conf-bar">
+                  <div class="conf-track"><div class="conf-fill" style="width:{{ (e.confidence*100)|round|int }}%"></div></div>
+                  <span style="font-size:11px;font-family:'DM Mono',monospace">{{ (e.confidence*100)|round(1) }}%</span>
+                </div>
+              </td>
+              <td>
+                {% if e.species_growth_rate_label %}
+                <span class="gr-badge" style="background:{{ e.species_growth_rate_color or '#22c55e' }}22;color:{{ e.species_growth_rate_color or '#22c55e' }}">
+                  {{ e.species_growth_rate_label }}
+                </span>
+                {% endif %}
+              </td>
+              <td class="climate-cell">
+                <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--mist)">
+                  {{ e.climate_zone or '—' }} · ×{{ e.climate_growth_factor or '—' }}
+                  {% if e.algeria_region %}<br><span style="color:#64748b">{{ e.algeria_region[:28] }}</span>{% endif %}
+                </div>
+              </td>
+              <td>
+                {% if e.location and e.location.lat %}
+                <div class="gps-coord">
+                  📍 {{ '%.4f'|format(e.location.lat|float) }}°N<br>
+                  {{ '%.4f'|format(e.location.lng|float) }}°E
+                </div>
+                {% else %}
+                <span style="font-size:11px;color:#cbd5e1">—</span>
+                {% endif %}
+              </td>
+              {% if user.role == 'admin' %}
+              <td style="font-size:11px;color:var(--mist)">{{ e.uploaded_by or e.user_email }}</td>
+              {% endif %}
+              <td>
+                {% if e.is_validated %}
+                <span class="status-v">✓ Validé</span>
+                {% else %}
+                <span class="status-p">⏳ En attente</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if user.role == 'admin' %}
+                <button class="btn-act btn-val" onclick="openValidation('{{ e._id }}',{{ e.estimated_age }},'{{ e.species_common_fr or e.species }}')">✓</button>
+                {% endif %}
+                <button class="btn-act btn-del" onclick="deletePred('{{ e._id }}')">🗑</button>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="12" style="text-align:center;color:var(--mist);padding:30px">
+              Aucune analyse. Uploadez une photo d'arbre pour commencer !
+            </td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VALIDATION MODAL -->
+<div class="modal-overlay" id="validationModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>✓ Valider & Corriger</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nom de l'arbre</label>
+        <input class="form-input" id="treeName" placeholder="ex: Cèdre du Djurdjura">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Espèce identifiée</label>
+        <input class="form-input ro" id="speciesDisplay" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Âge estimé (IA)</label>
+        <input class="form-input ro" id="originalAge" type="number" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Âge corrigé (ans) *</label>
+        <input class="form-input" id="correctedAge" type="number" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes de validation</label>
+        <textarea class="form-input" id="validationNotes" rows="3" placeholder="Observations terrain..."></textarea>
+      </div>
+      <button class="btn-submit" onclick="submitValidation()">✓ Valider & Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentEstId = null;
+
+// Load quota
+async function loadQuota() {
+  try {
+    const d = await (await fetch('/api/check_quota')).json();
+    const lim = d.limit === '∞' ? -1 : parseInt(d.limit);
+    const pct = lim > 0 ? Math.min(100, Math.round((d.used||0)/lim*100)) : 5;
+    document.getElementById('quotaText').textContent = lim>0 ? `${d.remaining} restantes` : 'Illimité ∞';
+    const fill = document.getElementById('quotaFill');
+    fill.style.width = pct+'%';
+    fill.style.background = pct>80 ? '#f97316' : 'var(--leaf)';
+    const badges = {free:'plan-free',researcher:'plan-researcher',enterprise:'plan-enterprise',admin:'plan-admin'};
+    const labels = {free:'● Gratuit',researcher:'✦ Chercheur',enterprise:'★ Entreprise',admin:'♛ Admin'};
+    const b = document.getElementById('planBadge');
+    b.className = 'plan-badge '+(badges[d.plan]||'plan-free');
+    b.textContent = labels[d.plan]||'● Gratuit';
+  } catch(e){}
+}
+
+// Load climate from last row
+function loadClimate() {
+  const rows = document.querySelectorAll('#tableBody tr[data-id]');
+  if (!rows.length) return;
+  const r = rows[0];
+  const temp=r.dataset.temp, rain=r.dataset.rain, soil=r.dataset.soil;
+  const factor=r.dataset.factor, zone=r.dataset.zone, zl=r.dataset.zoneLabel;
+  const region=r.dataset.region, lat=r.dataset.lat, lng=r.dataset.lng;
+  if (temp) document.getElementById('cTemp').textContent = temp+'°C';
+  if (rain) document.getElementById('cRain').textContent = rain+' mm';
+  if (soil) document.getElementById('cSoil').textContent = soil.substring(0,12);
+  if (factor) {
+    const f=parseFloat(factor);
+    document.getElementById('cFactor').textContent = '×'+f.toFixed(2);
+    document.getElementById('gfFill').style.width = Math.min(100,f*60)+'%';
+    document.getElementById('cExplain').textContent =
+      f>=1.2 ? 'Conditions excellentes → croissance très rapide' :
+      f>=1.0 ? 'Conditions normales → croissance standard' :
+      f>=0.8 ? 'Conditions difficiles → sécheresse, croissance ralentie' :
+               'Conditions arides → croissance très lente';
+  }
+  if (zone) document.getElementById('klimatBadge').textContent = '🗺 '+zone+' — '+(zl||'');
+  if (region) document.getElementById('regionBadge').textContent = '📍 '+region;
+  // GPS panel
+  if (lat && lng) {
+    document.getElementById('gpsPanel').style.display = 'block';
+    document.getElementById('gpsInfo').innerHTML =
+      `<b>Latitude:</b>  ${parseFloat(lat).toFixed(6)}° N<br>
+       <b>Longitude:</b> ${parseFloat(lng).toFixed(6)}° E<br>
+       <b>Région:</b>    ${region||'—'}<br>
+       <b>Zone Köppen:</b> ${zone||'—'} — ${zl||''}`;
+  }
+}
+
+// File select
+function onFile(input) {
+  if (!input.files?.length) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('imagePreview').src = e.target.result;
+    document.getElementById('previewBox').style.display = 'block';
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('analyzeBtn').disabled = false;
+    // Render demo species chips
+    renderSpeciesChips(null);
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+function removeImg(e) {
+  e.stopPropagation();
+  document.getElementById('imageInput').value='';
+  document.getElementById('previewBox').style.display='none';
+  document.getElementById('uploadZone').style.display='block';
+  document.getElementById('analyzeBtn').disabled=true;
+}
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over')});
+zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+zone.addEventListener('drop',e=>{
+  e.preventDefault(); zone.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')){
+    const dt=new DataTransfer(); dt.items.add(f);
+    document.getElementById('imageInput').files=dt.files;
+    onFile(document.getElementById('imageInput'));
+  }
+});
+
+// Species chips
+function renderSpeciesChips(scoresMap) {
+  const demo = [
+    {emoji:'🌲',name:'Pin d\'Alep', rate:'Rapide',    color:'#f97316',conf:70},
+    {emoji:'🌳',name:'Chêne vert',  rate:'Lent',      color:'#22c55e',conf:15},
+    {emoji:'🌿',name:'Eucalyptus',  rate:'Très rapide',color:'#ef4444',conf:10},
+  ];
+  const chips = scoresMap ? Object.entries(scoresMap).sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(([n,p])=>({emoji:'🌲',name:n.replace(/_/g,' '),rate:'—',color:'#4ade80',conf:Math.round(p*100)}))
+    : demo;
+  document.getElementById('noSpMsg')?.remove();
+  document.getElementById('speciesGrid').innerHTML = chips.map((c,i)=>`
+    <div class="sp-chip" ${i===0?`style="border-color:${c.color};background:${c.color}11"`:''}> 
+      <span class="sp-emoji">${c.emoji}</span>
+      <div class="sp-info">
+        <div class="sp-name">${c.name}</div>
+        <div class="sp-rate" style="color:${c.color}">${c.rate}</div>
+        <div class="sp-bar"><div class="sp-fill" style="width:${c.conf}%;background:${c.color}"></div></div>
+      </div>
+      <span style="font-size:10px;font-family:'DM Mono';color:#64748b">${c.conf}%</span>
+    </div>`).join('');
+}
+
+// Form submit
+document.getElementById('uploadForm').addEventListener('submit',()=>{
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true; btn.classList.add('loading');
+  document.getElementById('btnSpinner').style.display='block';
+  document.getElementById('btnText').textContent='Analyse en cours…';
+});
+
+// Validation modal
+function openValidation(id, age, species) {
+  currentEstId=id;
+  document.getElementById('treeName').value='';
+  document.getElementById('speciesDisplay').value=species;
+  document.getElementById('originalAge').value=age;
+  document.getElementById('correctedAge').value=age;
+  document.getElementById('validationNotes').value='';
+  document.getElementById('validationModal').classList.add('open');
+}
+function closeModal(){ document.getElementById('validationModal').classList.remove('open') }
+document.getElementById('validationModal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('validationModal')) closeModal()});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal() });
+
+async function submitValidation() {
+  const name=document.getElementById('treeName').value;
+  const age =document.getElementById('correctedAge').value;
+  const notes=document.getElementById('validationNotes').value;
+  if (!name||!age){ alert('Nom et âge corrigé requis'); return }
+  try {
+    const r = await fetch(`/admin/correct_prediction/${currentEstId}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({tree_name:name,corrected_age:parseInt(age),notes})
+    });
+    if(r.ok){ closeModal(); location.reload() }
+    else { const d=await r.json(); alert('Erreur: '+(d.error||'Échec')) }
+  } catch(e){ alert('Erreur réseau: '+e.message) }
+}
+
+async function deletePred(id) {
+  if(!confirm('Supprimer cette analyse ?')) return;
+  try {
+    const r=await fetch(`/prediction/${id}/delete`,{method:'POST'});
+    if(r.ok) location.reload();
+    else alert('Erreur de suppression');
+  } catch(e){ alert('Erreur réseau') }
+}
+
+function exportCsv() {
+  const rows=document.querySelectorAll('#tableBody tr[data-id]');
+  if(!rows.length){ alert('Aucune donnée'); return }
+  const hdr=['ID','Espece','Age_ans','Diametre_cm','Confiance','Zone_Climate','Facteur','Latitude','Longitude','Region'];
+  const lines=[hdr.join(',')];
+  rows.forEach(r=>{
+    lines.push([
+      r.dataset.id, r.dataset.species, r.dataset.age,
+      r.querySelector('td:nth-child(4)')?.textContent.replace(' cm','').trim()||'',
+      Math.round(parseFloat(r.dataset.conf)*100)+'%',
+      r.dataset.zone, r.dataset.factor,
+      r.dataset.lat||'', r.dataset.lng||'', (r.dataset.region||'').replace(/,/g,';')
+    ].join(','));
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
+  a.download=`treeage_export_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// Init
+loadQuota();
+loadClimate();
+</script>
+</body>
+</html>

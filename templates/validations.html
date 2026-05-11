@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Validate & Correct Predictions</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: #111827;
+            color: white;
+            padding: 20px;
+            position: fixed;
+            width: 250px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #cbd5e1;
+            padding: 12px 10px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 5px 0;
+            transition: 0.2s;
+        }
+
+        .sidebar a:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .sidebar a.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .main {
+            margin-left: 270px;
+            padding: 30px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .prediction-card {
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .prediction-card.validated {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .tree-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .prediction-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .badge-validated {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-pending {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-validate {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-dialog {
+            max-width: 500px;
+        }
+
+        .correction-form {
+            padding: 20px;
+        }
+
+        .correction-form input {
+            margin-bottom: 15px;
+        }
+
+        table {
+            background: white;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h3>🌳 TreeAge AI</h3>
+    <hr style="opacity: 0.3;">
+    
+    <a href="/admin">📊 Dashboard</a>
+    <a href="/admin/users">👤 Users</a>
+    <a href="/admin/validations" class="active">✓ Validations</a>
+    <a href="/logout" style="color: #ff7675;">🚪 Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <h2>✓ Validate & Correct Predictions</h2>
+
+    <!-- Summary Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card" style="padding: 20px; text-align: center; background: linear-gradient(135deg, #3b82f6, #2563eb);">
+                <h5 style="color: white; margin: 0;">Total Predictions</h5>
+                <h2 style="color: white; margin: 10px 0;" id="totalCount">-</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card" style="padding: 20px; text-align: center; background: linear-gradient(135deg, #10b981, #059669);">
+                <h5 style="color: white; margin: 0;">Validated</h5>
+                <h2 style="color: white; margin: 10px 0;" id="validatedCount">-</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card" style="padding: 20px; text-align: center; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <h5 style="color: white; margin: 0;">Pending</h5>
+                <h2 style="color: white; margin: 10px 0;" id="pendingCount">-</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predictions Table -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped table-hover" id="predictionsTable">
+                <thead>
+                    <tr>
+                        <th>Tree Name</th>
+                        <th>Original Age</th>
+                        <th>Corrected Age</th>
+                        <th>Confidence</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Loading predictions...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Correction Modal -->
+<div class="modal fade" id="correctionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Correct & Validate Prediction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="correction-form">
+                    <div class="mb-3">
+                        <label class="form-label">Tree Name</label>
+                        <input type="text" class="form-control" id="treeName" placeholder="Enter tree name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Original Estimated Age</label>
+                        <input type="number" class="form-control" id="originalAge" readonly style="background: #f0f0f0;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Corrected Age (years) *</label>
+                        <input type="number" class="form-control" id="correctedAge" placeholder="Enter correct age" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Validation Notes</label>
+                        <textarea class="form-control" id="validationNotes" rows="3" placeholder="Why was this correction made?"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary w-100" onclick="submitCorrection()">
+                        ✓ Validate & Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+let currentEstimationId = null;
+let predictions = [];
+
+// Load predictions on page load
+window.addEventListener('load', loadPredictions);
+
+async function loadPredictions() {
+    try {
+        const response = await fetch('/api/predictions/with_names');
+        const data = await response.json();
+        
+        predictions = data;
+        displayPredictions(data);
+        updateStats();
+    } catch (error) {
+        console.error('Error loading predictions:', error);
+        document.getElementById('tableBody').innerHTML = 
+            '<tr><td colspan="7" class="text-center text-danger">Error loading predictions</td></tr>';
+    }
+}
+
+function displayPredictions(data) {
+    const tbody = document.getElementById('tableBody');
+    
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No predictions yet</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = data.map(p => `
+        <tr>
+            <td><strong>${p.tree_name}</strong></td>
+            <td>${p.original_age || p.estimated_age} yrs</td>
+            <td>${p.corrected_age ? p.corrected_age + ' yrs' : '-'}</td>
+            <td>${(p.confidence * 100).toFixed(1)}%</td>
+            <td>${new Date(p.date).toLocaleDateString()}</td>
+            <td>
+                <span class="badge ${p.is_validated ? 'badge-validated' : 'badge-pending'}">
+                    ${p.is_validated ? '✓ Validated' : '⏳ Pending'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-validate btn-sm" onclick="openCorrectionModal('${p._id}', ${p.original_age}, '${p.tree_name}')">
+                    ✓ Validate
+                </button>
+                <button class="btn btn-delete btn-sm" onclick="deletePrediction('${p._id}', '${p.tree_name}')">
+                    🗑️ Delete
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateStats() {
+    const total = predictions.length;
+    const validated = predictions.filter(p => p.is_validated).length;
+    const pending = total - validated;
+    
+    document.getElementById('totalCount').textContent = total;
+    document.getElementById('validatedCount').textContent = validated;
+    document.getElementById('pendingCount').textContent = pending;
+}
+
+function openCorrectionModal(estimationId, originalAge, treeName) {
+    currentEstimationId = estimationId;
+    document.getElementById('treeName').value = treeName;
+    document.getElementById('originalAge').value = originalAge;
+    document.getElementById('correctedAge').value = originalAge;
+    document.getElementById('validationNotes').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('correctionModal'));
+    modal.show();
+}
+
+async function submitCorrection() {
+    const treeName = document.getElementById('treeName').value;
+    const correctedAge = document.getElementById('correctedAge').value;
+    const notes = document.getElementById('validationNotes').value;
+    
+    if (!correctedAge || !treeName) {
+        alert('Tree name and corrected age are required!');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/correct_prediction/${currentEstimationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                corrected_age: parseInt(correctedAge),
+                tree_name: treeName,
+                notes: notes
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('✓ Prediction validated and saved!');
+            bootstrap.Modal.getInstance(document.getElementById('correctionModal')).hide();
+            loadPredictions();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to correct prediction'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function deletePrediction(estimationId, treeName) {
+    if (!confirm(`Delete prediction for "${treeName}"? This cannot be undone!`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/prediction/${estimationId}/delete`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('✓ Prediction deleted!');
+            loadPredictions();
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete prediction'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+</script>
+
+</body>
+</html>

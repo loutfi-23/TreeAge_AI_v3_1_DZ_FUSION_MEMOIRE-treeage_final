@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chapitre {{ chapter.number }} — TreeAge AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --forest:#0d1f14;--forest2:#1a3325;--accent:#2d5a3d;
+      --leaf:#4ade80;--leaf2:#86efac;--ink:#0f172a;--mist:#64748b;
+      --canvas:#f1f5f4;--card:#fff;--border:#e2e8f0;
+      --shadow:0 2px 12px rgba(0,0,0,.07);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--ink);display:flex;min-height:100vh}
+
+    /* Sidebar */
+    .sidebar{width:240px;background:var(--forest);color:#cbd5e1;position:fixed;height:100vh;
+             display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+    .brand{padding:20px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .brand h1{font-family:'DM Serif Display';font-size:20px;color:var(--leaf2);font-weight:400}
+    .brand p{font-size:11px;color:#64748b;margin-top:3px}
+    .user-info{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:center}
+    .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--leaf),var(--leaf2));
+            display:flex;align-items:center;justify-content:center;color:var(--forest);font-weight:700}
+    .user-info-text strong{color:#fff;font-size:13px;display:block}
+    .user-info-text small{color:#94a3b8;font-size:11px}
+    .nav{padding:14px 12px;flex:1}
+    .nav-link{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;color:#94a3b8;
+              text-decoration:none;font-size:13px;margin-bottom:3px;transition:.2s}
+    .nav-link:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
+    .nav-link.active{background:rgba(74,222,128,.12);color:var(--leaf)}
+    .nav-link.logout{color:#f87171}
+    .nav-divider{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.5px;
+                 padding:14px 11px 6px;font-weight:600}
+
+    /* Layout: main + right rail */
+    .main{margin-left:240px;flex:1;padding:32px 40px;display:grid;grid-template-columns:1fr 240px;
+          gap:32px;align-items:start;max-width:1400px}
+
+    .page-head{grid-column:1/-1;margin-bottom:8px}
+    .breadcrumb{font-size:13px;color:var(--mist);margin-bottom:14px}
+    .breadcrumb a{color:var(--accent);text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+    .ch-num{font-family:'DM Serif Display';font-size:14px;color:var(--accent);font-weight:400;letter-spacing:2px;
+            text-transform:uppercase;margin-bottom:6px}
+    .ch-title{font-family:'DM Serif Display';font-size:34px;color:var(--forest);font-weight:400;line-height:1.2}
+
+    /* Content paper */
+    .content{background:var(--card);border:1px solid var(--border);border-radius:10px;
+             padding:34px 44px;box-shadow:var(--shadow);min-height:60vh}
+    .content section{margin-bottom:28px;scroll-margin-top:20px}
+    .content section:last-child{margin-bottom:0}
+    .content h2{font-family:'DM Serif Display';font-size:22px;color:var(--forest);font-weight:400;
+                margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--leaf2)}
+    .content h2 .id{color:var(--accent);font-weight:400;margin-right:8px}
+    .content p{font-size:15px;line-height:1.75;color:#334155;margin-bottom:12px;text-align:justify}
+    .content ul,.content ol{margin:8px 0 14px 24px;padding-left:8px}
+    .content li{font-size:14.5px;line-height:1.7;color:#334155;margin-bottom:6px}
+    .content strong{color:var(--forest);font-weight:600}
+    .content em{color:#475569}
+
+    /* Right rail */
+    .rail{position:sticky;top:32px}
+    .rail-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+               box-shadow:var(--shadow);margin-bottom:14px}
+    .rail-card h4{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--mist);
+                  margin-bottom:10px;font-weight:600}
+    .rail-mini{display:block;padding:7px 10px;font-size:12px;border-radius:6px;text-decoration:none;
+               color:var(--ink);margin-bottom:3px;border-left:3px solid transparent;transition:.15s}
+    .rail-mini:hover{background:var(--canvas);border-left-color:var(--leaf)}
+    .rail-mini.active{background:rgba(74,222,128,.1);border-left-color:var(--accent);font-weight:600;color:var(--accent)}
+
+    /* TOC */
+    .toc-list{max-height:360px;overflow-y:auto;padding-right:4px}
+    .toc-link{display:block;padding:5px 8px;font-size:11.5px;color:#475569;text-decoration:none;
+              border-left:2px solid var(--border);margin-left:0;line-height:1.4}
+    .toc-link:hover{color:var(--accent);border-left-color:var(--leaf2)}
+    .toc-link.lvl-2{padding-left:14px;color:var(--mist);font-size:11px}
+    .toc-link.lvl-3{padding-left:22px;color:#94a3b8;font-size:10.5px}
+
+    /* Pagination */
+    .pagination{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;
+                margin-top:20px;gap:14px}
+    .page-btn{flex:1;display:flex;align-items:center;gap:10px;padding:14px 18px;background:#fff;
+              border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--ink);
+              transition:.15s;box-shadow:var(--shadow)}
+    .page-btn:hover{border-color:var(--leaf);transform:translateY(-1px)}
+    .page-btn.disabled{opacity:.4;pointer-events:none}
+    .page-btn.next{justify-content:flex-end;text-align:right}
+    .page-btn .label{font-size:11px;color:var(--mist);text-transform:uppercase;letter-spacing:.5px}
+    .page-btn .title{font-size:13px;font-weight:600;color:var(--forest);margin-top:2px}
+
+    @media (max-width:1100px){
+      .main{grid-template-columns:1fr;max-width:none}
+      .rail{position:static;display:none}
+    }
+    @media (max-width:900px){
+      .sidebar{transform:translateX(-100%)}
+      .main{margin-left:0;padding:20px}
+      .content{padding:24px}
+    }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <h1>🌳 TreeAge AI</h1>
+    <p>v3.1 — DZ Edition</p>
+  </div>
+  <div class="user-info">
+    <div class="avatar">{{ (user.name or user.email)[0]|upper }}</div>
+    <div class="user-info-text">
+      <strong>{{ user.name or user.email.split('@')[0] }}</strong>
+      <small>{{ user.role|capitalize }}</small>
+    </div>
+  </div>
+  <nav class="nav">
+    <a class="nav-link" href="/dashboard"><span>📊</span>Tableau de bord</a>
+    <a class="nav-link" href="/map_view"><span>📍</span>Carte GPS</a>
+    <a class="nav-link" href="/about"><span>👤</span>À propos / Profil</a>
+
+    <div class="nav-divider">📖 Mémoire Master 2</div>
+    <a class="nav-link" href="/memoire"><span>📘</span>Page de garde</a>
+    {% for num, title in all_chapters %}
+    <a class="nav-link {% if num == chapter.number %}active{% endif %}" href="/memoire/chapitre/{{ num }}">
+      <span>📄</span>Chapitre {{ num }}
+    </a>
+    {% endfor %}
+
+    <div class="nav-divider">⚙ Système</div>
+    <a class="nav-link" href="/saas/plans"><span>💎</span>Plans & Tarifs</a>
+    {% if user.role == 'admin' %}
+    <a class="nav-link" href="/admin"><span>⚙️</span>Admin</a>
+    {% endif %}
+    <a class="nav-link logout" href="/logout"><span>🚪</span>Déconnexion</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+  <div class="page-head">
+    <div class="breadcrumb">
+      <a href="/dashboard">Dashboard</a> ›
+      <a href="/memoire">Mémoire</a> ›
+      <span>Chapitre {{ chapter.number }}</span>
+    </div>
+    <div class="ch-num">CHAPITRE {{ chapter.number }}</div>
+    <h1 class="ch-title">{{ chapter.title }}</h1>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    {% for sec in chapter.sections %}
+    <section id="sec-{{ sec.id|replace('.', '-') }}">
+      <h2>
+        {% if sec.id != 'intro' %}<span class="id">{{ sec.id }}</span>{% endif %}
+        {{ sec.title|replace(sec.id ~ ' ', '') if sec.id != 'intro' else sec.title }}
+      </h2>
+      {% for blk in sec.blocks %}
+        {% if blk.type == 'p' %}
+          <p>{{ blk.text }}</p>
+        {% elif blk.type == 'ul' %}
+          <ul>{% for it in blk['items'] %}<li>{{ it }}</li>{% endfor %}</ul>
+        {% elif blk.type == 'ol' %}
+          <ol>{% for it in blk['items'] %}<li>{{ it }}</li>{% endfor %}</ol>
+        {% elif blk.type == 'table_raw' %}
+          <pre style="background:var(--canvas);padding:10px;border-radius:6px;font-size:12px;overflow-x:auto">{{ blk.lines|join('\n') }}</pre>
+        {% endif %}
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </div>
+
+  <!-- RIGHT RAIL -->
+  <aside class="rail">
+    <div class="rail-card">
+      <h4>📑 Sommaire du chapitre</h4>
+      <div class="toc-list">
+        {% for sec in chapter.sections %}
+          {% set depth = sec.id.count('.') if sec.id != 'intro' else 1 %}
+          <a class="toc-link lvl-{{ depth }}" href="#sec-{{ sec.id|replace('.', '-') }}">
+            {{ sec.title }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="rail-card">
+      <h4>📖 Autres chapitres</h4>
+      {% for num, title in all_chapters %}
+      <a class="rail-mini {% if num == chapter.number %}active{% endif %}" href="/memoire/chapitre/{{ num }}">
+        Ch. {{ num }} — {{ title[:34] }}{% if title|length > 34 %}…{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+
+    <div class="rail-card" style="background:linear-gradient(135deg,var(--forest),var(--forest2));border:none;color:#cbd5e1">
+      <h4 style="color:var(--leaf2)">👤 Auteur</h4>
+      <p style="font-size:13px;color:#fff;font-weight:600;margin-bottom:4px">{{ meta.author }}</p>
+      <p style="font-size:11px;color:#94a3b8;line-height:1.5">{{ meta.specialty }}</p>
+      <p style="font-size:11px;color:#94a3b8;margin-top:4px">{{ meta.university }}</p>
+      <p style="font-size:11px;color:var(--leaf);margin-top:8px">{{ meta.year }}</p>
+    </div>
+  </aside>
+
+  <!-- PAGINATION -->
+  <div class="pagination">
+    {% set prev_num = chapter.number - 1 %}
+    {% set next_num = chapter.number + 1 %}
+    {% set chapter_nums = all_chapters|map(attribute=0)|list %}
+
+    {% if prev_num in chapter_nums %}
+    <a class="page-btn" href="/memoire/chapitre/{{ prev_num }}">
+      <span>←</span>
+      <div>
+        <div class="label">Chapitre précédent</div>
+        <div class="title">Chapitre {{ prev_num }}</div>
+      </div>
+    </a>
+    {% else %}
+    <a class="page-btn" href="/memoire">
+      <span>←</span>
+      <div>
+        <div class="label">Retour</div>
+        <div class="title">Page de garde</div>
+      </div>
+    </a>
+    {% endif %}
+
+    {% if next_num in chapter_nums %}
+    <a class="page-btn next" href="/memoire/chapitre/{{ next_num }}">
+      <div>
+        <div class="label">Chapitre suivant</div>
+        <div class="title">Chapitre {{ next_num }}</div>
+      </div>
+      <span>→</span>
+    </a>
+    {% else %}
+    <a class="page-btn next" href="/dashboard">
+      <div>
+        <div class="label">Retour</div>
+        <div class="title">Tableau de bord</div>
+      </div>
+      <span>→</span>
+    </a>
+    {% endif %}
+  </div>
+
+</main>
+
+</body>
+</html>

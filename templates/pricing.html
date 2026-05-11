@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>TreeAge AI — Plans & Tarifs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0f172a; --mist: #64748b; --canvas: #f8fafc;
+      --leaf: #4ade80; --forest: #0d1f14; --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--canvas);
+      color: var(--ink);
+    }
+
+    .hero {
+      background: var(--forest);
+      text-align: center;
+      padding: 64px 20px 80px;
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 48px;
+      color: var(--leaf);
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      color: #86efac;
+      font-size: 18px;
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1000px;
+      margin: -40px auto 60px;
+      padding: 0 20px;
+    }
+
+    .plan-card {
+      background: white;
+      border-radius: 16px;
+      border: 1.5px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      position: relative;
+      transition: transform .2s;
+    }
+
+    .plan-card:hover { transform: translateY(-4px); }
+
+    .plan-card.popular {
+      border-color: #3b82f6;
+      box-shadow: 0 8px 32px rgba(59,130,246,.2);
+    }
+
+    .popular-label {
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      background: #3b82f6;
+      color: white;
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .plan-header {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .plan-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--ink);
+    }
+
+    .plan-price {
+      font-family: 'DM Mono', monospace;
+      font-size: 36px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .plan-price .per {
+      font-size: 14px;
+      color: var(--mist);
+      font-weight: 400;
+    }
+
+    .plan-body { padding: 22px 24px; }
+
+    .feature-list { list-style: none; }
+
+    .feature-list li {
+      padding: 7px 0;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .feature-list li:last-child { border-bottom: none; }
+
+    .feat-check { color: #22c55e; font-size: 15px; }
+    .feat-x     { color: #e2e8f0; font-size: 15px; }
+
+    .plan-cta {
+      display: block;
+      margin: 20px 24px 24px;
+      padding: 13px;
+      text-align: center;
+      border-radius: 9px;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all .2s;
+      cursor: pointer;
+    }
+
+    .cta-free     { background: var(--canvas); border: 1.5px solid var(--border); color: var(--ink); }
+    .cta-research { background: #3b82f6; color: white; }
+    .cta-research:hover { background: #2563eb; }
+    .cta-ent      { background: #8b5cf6; color: white; }
+    .cta-ent:hover{ background: #7c3aed; }
+
+    .limit-table {
+      max-width: 700px;
+      margin: 0 auto 60px;
+      padding: 0 20px;
+    }
+
+    .limit-table h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    th { background: var(--forest); color: #86efac; font-size: 12px; font-family: 'DM Mono', monospace; padding: 13px 16px; text-align: left; letter-spacing: .5px; }
+    td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+    tr:last-child td { border-bottom: none; }
+    td:not(:first-child) { font-family: 'DM Mono', monospace; text-align: center; }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 13px;
+      margin: 0 auto 40px;
+      display: block;
+      width: fit-content;
+    }
+
+    @media (max-width: 768px) {
+      .plans { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Plans & Tarifs</h1>
+  <p>De la recherche académique au déploiement industriel en forêt méditerranéenne</p>
+</div>
+
+<div class="plans">
+
+  <!-- FREE -->
+  <div class="plan-card">
+    <div class="plan-header">
+      <div class="plan-name">🌱 Gratuit</div>
+      <div class="plan-price" style="color: #6b7280;">
+        0€ <span class="per">/ mois</span>
+      </div>
+      <div style="font-size: 12px; color: var(--mist); margin-top: 6px;">Parfait pour tester</div>
+    </div>
+    <div class="plan-body">
+      <ul class="feature-list">
+        <li><span class="feat-check">✓</span> 10 analyses / mois</li>
+        <li><span class="feat-check">✓</span> Détection d'espèces</li>
+        <li><span class="feat-check">✓</span> Carte GPS basique</li>
+        <li><span class="feat-x">✗</span> Données climatiques</li>
+        <li><span class="feat-x">✗</span> Export CSV</li>
+        <li><span class="feat-x">✗</span> API REST</li>
+        <li><span class="feat-x">✗</span> Support</li>
+      </ul>
+    </div>
+    <a href="/dashboard" class="plan-cta cta-free">Commencer gratuitement</a>
+  </div>
+
+  <!-- RESEARCHER -->
+  <div class="plan-card popular">
+    <div class="popular-label">⭐ Populaire</div>
+    <div class="plan-header">
+      <div class="plan-name">🔬 Chercheur</div>
+      <div class="plan-price" style="color: #3b82f6;">
+        29€ <span class="per">/ mois</span>
+      </div>
+      <div style="font-size: 12px; color: var(--mist); margin-top: 6px;">Pour thèses & labos</div>
+    </div>
+    <div class="plan-body">
+      <ul class="feature-list">
+        <li><span class="feat-check">✓</span> 500 analyses / mois</li>
+        <li><span class="feat-check">✓</span> CNN espèces avancé</li>
+        <li><span class="feat-check">✓</span> Données Geo-AI complètes</li>
+        <li><span class="feat-check">✓</span> Export CSV / Excel</li>
+        <li><span class="feat-check">✓</span> API REST complète</li>
+        <li><span class="feat-check">✓</span> 3 membres d'équipe</li>
+        <li><span class="feat-check">✓</span> Support email</li>
+      </ul>
+    </div>
+    <a href="/register?plan=researcher" class="plan-cta cta-research">Essai 14 jours gratuit</a>
+  </div>
+
+  <!-- ENTERPRISE -->
+  <div class="plan-card">
+    <div class="plan-header">
+      <div class="plan-name">🏢 Entreprise</div>
+      <div class="plan-price" style="color: #8b5cf6;">
+        149€ <span class="per">/ mois</span>
+      </div>
+      <div style="font-size: 12px; color: var(--mist); margin-top: 6px;">Pour industries forestières</div>
+    </div>
+    <div class="plan-body">
+      <ul class="feature-list">
+        <li><span class="feat-check">✓</span> Analyses illimitées</li>
+        <li><span class="feat-check">✓</span> Modèle CNN personnalisé</li>
+        <li><span class="feat-check">✓</span> Sol SoilGrids (ISRIC)</li>
+        <li><span class="feat-check">✓</span> Équipe illimitée</li>
+        <li><span class="feat-check">✓</span> API + Webhooks</li>
+        <li><span class="feat-check">✓</span> Dashboard custom</li>
+        <li><span class="feat-check">✓</span> Support 24/7 + formation</li>
+      </ul>
+    </div>
+    <a href="mailto:contact@treeage.ai" class="plan-cta cta-ent">Contacter les ventes</a>
+  </div>
+
+</div>
+
+<!-- Comparison Table -->
+<div class="limit-table">
+  <h2>Comparaison détaillée</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Fonctionnalité</th>
+        <th>Gratuit</th>
+        <th>Chercheur</th>
+        <th>Entreprise</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Analyses / mois</td><td>10</td><td>500</td><td>∞</td></tr>
+      <tr><td>Espèces CNN</td><td>Basique</td><td>6 espèces</td><td>Personnalisé</td></tr>
+      <tr><td>Données climatiques</td><td>❌</td><td>✓ Open-Meteo</td><td>✓ Avancé</td></tr>
+      <tr><td>Type de sol</td><td>❌</td><td>✓ Estimé</td><td>✓ SoilGrids</td></tr>
+      <tr><td>Export CSV</td><td>❌</td><td>✓</td><td>✓</td></tr>
+      <tr><td>API REST</td><td>❌</td><td>✓ 200/jour</td><td>✓ Illimité</td></tr>
+      <tr><td>Membres équipe</td><td>1</td><td>3</td><td>Illimité</td></tr>
+      <tr><td>Stockage images</td><td>100 MB</td><td>2 GB</td><td>Illimité</td></tr>
+      <tr><td>Carte GPS interactive</td><td>✓</td><td>✓</td><td>✓ + GeoJSON</td></tr>
+      <tr><td>Validation admin</td><td>✓</td><td>✓</td><td>✓ + workflow</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<a href="/dashboard" class="back-link">← Retour au tableau de bord</a>
+
+</body>
+</html>

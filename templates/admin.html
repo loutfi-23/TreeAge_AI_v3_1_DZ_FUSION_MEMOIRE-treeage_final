@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .sidebar {
+            height: 100vh;
+            background: #111827;
+            color: white;
+            padding: 20px;
+            position: fixed;
+            width: 250px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #cbd5e1;
+            padding: 12px 10px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 5px 0;
+            transition: 0.2s;
+        }
+
+        .sidebar a:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .sidebar a.logout {
+            color: #ff7675;
+        }
+
+        .main {
+            margin-left: 270px;
+            padding: 30px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-card {
+            padding: 20px;
+            color: white;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card h4 {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .stat-card h2 {
+            margin: 10px 0 0 0;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stat-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-success {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .stat-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .stat-warning {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        table {
+            background: white;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .btn-sm {
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+
+        .badge {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        h4 {
+            color: #2c3e50;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h3>🌳 TreeAge AI</h3>
+    <hr style="opacity: 0.3;">
+    
+    <a href="/admin">📊 Dashboard</a>
+    <a href="/admin/users">👤 Users</a>
+    <a href="/about">👤 À Propos</a>
+    <a href="/logout" class="logout">🚪 Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <h2>📊 Admin Dashboard</h2>
+
+    <!-- STATS -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card stat-card stat-primary">
+                <h4>Total Users</h4>
+                <h2>{{ stats.total_users }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card stat-card stat-success">
+                <h4>Total Estimations</h4>
+                <h2>{{ stats.total_estimations }}</h2>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card stat-card stat-info">
+                <h4>Avg Confidence</h4>
+                <h2>{{ "%.1f" % (stats.avg_confidence * 100) }}%</h2>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <div class="card stat-card stat-warning">
+                <h4>Database Size</h4>
+                <h2>{{ stats.db_size_mb }}MB</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- USERS SECTION -->
+    <h4>👤 Users Management</h4>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% if users %}
+                    {% for u in users %}
+                        <tr>
+                            <td>{{ u.nom }} {{ u.prenom }}</td>
+                            <td>{{ u.email }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ u.role }}</span>
+                            </td>
+                            <td>
+                                {% if u.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ u.last_login or 'Never' }}</td>
+                            <td>
+                                <a class="btn btn-sm btn-primary" href="/admin/users/{{ u._id }}" title="Edit">Edit</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No users found</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- RECENT ESTIMATIONS -->
+    <h4>🌳 Recent Estimations</h4>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Diameter (cm)</th>
+                        <th>Age (years)</th>
+                        <th>Confidence</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% if estimations %}
+                    {% for e in estimations %}
+                        <tr>
+                            <td>{{ e.user_email }}</td>
+                            <td>{{ e.diameter_cm }}</td>
+                            <td><strong>{{ e.estimated_age }}</strong></td>
+                            <td>{{ "%.1f" % (e.confidence * 100) }}%</td>
+                            <td>{{ e.date }}</td>
+                            <td>
+                                {% if e.status == 'validated' %}
+                                    <span class="badge bg-success">✓ Validated</span>
+                                {% elif e.status == 'predicted' %}
+                                    <span class="badge bg-warning">⏳ Pending</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ e.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No estimations yet</td>
+                    </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

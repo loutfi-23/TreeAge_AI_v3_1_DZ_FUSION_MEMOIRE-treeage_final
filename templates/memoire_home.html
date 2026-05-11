@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mémoire — TreeAge AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --forest:#0d1f14;--forest2:#1a3325;--accent:#2d5a3d;
+      --leaf:#4ade80;--leaf2:#86efac;--ink:#0f172a;--mist:#64748b;
+      --canvas:#f1f5f4;--card:#fff;--border:#e2e8f0;
+      --shadow:0 2px 12px rgba(0,0,0,.07);
+      --paper:#fdfcf7;--paper-line:#e8e2d0;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--ink);display:flex;min-height:100vh}
+
+    /* Sidebar */
+    .sidebar{width:240px;background:var(--forest);color:#cbd5e1;position:fixed;height:100vh;
+             display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+    .brand{padding:20px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .brand h1{font-family:'DM Serif Display';font-size:20px;color:var(--leaf2);font-weight:400}
+    .brand p{font-size:11px;color:#64748b;margin-top:3px}
+    .user-info{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:center}
+    .avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--leaf),var(--leaf2));
+            display:flex;align-items:center;justify-content:center;color:var(--forest);font-weight:700}
+    .user-info-text strong{color:#fff;font-size:13px;display:block}
+    .user-info-text small{color:#94a3b8;font-size:11px}
+    .nav{padding:14px 12px;flex:1}
+    .nav-link{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;color:#94a3b8;
+              text-decoration:none;font-size:13px;margin-bottom:3px;transition:.2s}
+    .nav-link:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
+    .nav-link.active{background:rgba(74,222,128,.12);color:var(--leaf)}
+    .nav-link.logout{color:#f87171}
+    .nav-divider{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.5px;
+                 padding:14px 11px 6px;font-weight:600}
+
+    /* Main */
+    .main{margin-left:240px;flex:1;padding:32px 40px}
+
+    .page-head{margin-bottom:28px}
+    .page-head h1{font-family:'DM Serif Display';font-size:34px;color:var(--forest);font-weight:400;margin-bottom:6px}
+    .page-head p{color:var(--mist);font-size:14px}
+
+    /* Cover card */
+    .cover{background:var(--paper);border:1px solid var(--paper-line);border-radius:12px;
+           padding:48px 56px;box-shadow:var(--shadow);margin-bottom:24px;position:relative;
+           background-image:repeating-linear-gradient(0deg,transparent 0,transparent 31px,rgba(232,226,208,.4) 32px)}
+    .cover::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;
+                   background:linear-gradient(180deg,#8b6f47,#5d4a30);border-radius:12px 0 0 12px}
+    .ar-line{font-family:serif;text-align:center;font-size:13px;color:#5d4a30;margin-bottom:6px;direction:rtl}
+    .uni-line{text-align:center;font-size:14px;color:#5d4a30;margin-bottom:30px;font-weight:600}
+    .cover-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;
+                font-size:13px;color:#3d2f1c;max-width:520px;margin:0 auto 32px;
+                padding:14px 18px;background:rgba(139,111,71,.06);border-radius:8px}
+    .cover-meta dt{font-weight:600;color:#5d4a30}
+    .cover-meta dd{}
+    .theme-block{text-align:center;margin:36px 0}
+    .theme-label{font-size:13px;color:#5d4a30;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+    .theme-title{font-family:'DM Serif Display';font-size:30px;color:var(--forest);font-weight:400;
+                 line-height:1.3;max-width:680px;margin:0 auto;font-style:italic}
+    .author-block{text-align:center;margin:36px 0 24px}
+    .author-block p{margin:6px 0;font-size:14px;color:#3d2f1c}
+    .author-block strong{font-size:18px;color:var(--forest);display:block;margin:6px 0}
+    .supervisors{font-size:13px;color:#5d4a30;margin-top:10px}
+    .year-line{text-align:center;margin-top:40px;font-size:14px;color:#5d4a30;font-weight:600;
+               padding-top:20px;border-top:1px solid rgba(139,111,71,.2)}
+
+    /* Sections */
+    .section{background:var(--card);border:1px solid var(--border);border-radius:10px;
+             padding:24px 28px;box-shadow:var(--shadow);margin-bottom:18px}
+    .section h2{font-family:'DM Serif Display';font-size:22px;color:var(--forest);font-weight:400;margin-bottom:12px}
+    .section p{font-size:14px;line-height:1.65;color:#334155;margin-bottom:10px}
+    .section p:last-child{margin-bottom:0}
+
+    /* Abstract toggle */
+    .abstract-tabs{display:flex;gap:8px;margin-bottom:14px}
+    .abs-tab{padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--border);
+             background:#fff;color:var(--mist);font-weight:500}
+    .abs-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .abs-content{display:none}
+    .abs-content.active{display:block}
+
+    /* TOC */
+    .toc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+    .toc-item{display:block;padding:14px 16px;background:var(--canvas);border:1px solid var(--border);
+              border-radius:8px;text-decoration:none;color:var(--ink);transition:.15s}
+    .toc-item:hover{border-color:var(--leaf);background:#fff;transform:translateY(-1px);
+                    box-shadow:0 4px 12px rgba(74,222,128,.1)}
+    .toc-num{font-family:'DM Serif Display';font-size:28px;color:var(--accent);font-weight:400;display:block;line-height:1}
+    .toc-title{font-size:13px;font-weight:600;color:var(--ink);margin-top:6px;line-height:1.4}
+
+    /* Keywords */
+    .keywords{display:flex;flex-wrap:wrap;gap:6px}
+    .keyword{padding:5px 11px;background:rgba(74,222,128,.1);color:var(--accent);
+             border-radius:14px;font-size:12px;font-weight:500;border:1px solid rgba(74,222,128,.25)}
+
+    /* Mapping table */
+    .mapping-tbl{width:100%;border-collapse:collapse;font-size:13px}
+    .mapping-tbl thead{background:var(--canvas)}
+    .mapping-tbl th{text-align:left;padding:10px 12px;font-weight:600;font-size:12px;color:var(--mist);
+                    text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border)}
+    .mapping-tbl td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+    .mapping-tbl tr:hover td{background:rgba(74,222,128,.04)}
+    .mapping-tbl code{background:rgba(15,23,42,.06);padding:1px 6px;border-radius:4px;
+                      font-size:11px;color:var(--accent);font-family:'DM Mono',monospace}
+
+    @media (max-width:900px){
+      .sidebar{transform:translateX(-100%)}
+      .main{margin-left:0;padding:20px}
+      .cover{padding:30px 24px}
+      .toc-list{grid-template-columns:1fr}
+      .cover-meta{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <h1>🌳 TreeAge AI</h1>
+    <p>v3.1 — DZ Edition</p>
+  </div>
+  <div class="user-info">
+    <div class="avatar">{{ (user.name or user.email)[0]|upper }}</div>
+    <div class="user-info-text">
+      <strong>{{ user.name or user.email.split('@')[0] }}</strong>
+      <small>{{ user.role|capitalize }}</small>
+    </div>
+  </div>
+  <nav class="nav">
+    <a class="nav-link" href="/dashboard"><span>📊</span>Tableau de bord</a>
+    <a class="nav-link" href="/map_view"><span>📍</span>Carte GPS</a>
+    <a class="nav-link" href="/about"><span>👤</span>À propos / Profil</a>
+
+    <div class="nav-divider">📖 Mémoire Master 2</div>
+    <a class="nav-link active" href="/memoire"><span>📘</span>Page de garde</a>
+    {% for num, title in chapters %}
+    <a class="nav-link" href="/memoire/chapitre/{{ num }}"><span>📄</span>Chapitre {{ num }}</a>
+    {% endfor %}
+
+    <div class="nav-divider">⚙ Système</div>
+    <a class="nav-link" href="/saas/plans"><span>💎</span>Plans & Tarifs</a>
+    {% if user.role == 'admin' %}
+    <a class="nav-link" href="/admin"><span>⚙️</span>Admin</a>
+    {% endif %}
+    <a class="nav-link logout" href="/logout"><span>🚪</span>Déconnexion</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+  <div class="page-head">
+    <h1>📘 Mémoire de Master</h1>
+    <p>Documentation académique du projet TreeAge AI — Master 2 Gestion et Analyse des Données Massives</p>
+  </div>
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="ar-line">الجمهورية الجزائرية الديمقراطية الشعبية — وزارة التعليم العالي والبحث العلمي</div>
+    <div class="ar-line" style="margin-bottom:18px">{{ meta.university_ar }}</div>
+    <div class="uni-line">{{ meta.university }} — Badji Mokhtar Annaba University</div>
+
+    <dl class="cover-meta">
+      <dt>Faculté :</dt><dd>{{ meta.faculty }}</dd>
+      <dt>Département :</dt><dd>{{ meta.department }}</dd>
+      <dt>Domaine :</dt><dd>{{ meta.domain }}</dd>
+      <dt>Filière :</dt><dd>Informatique</dd>
+      <dt>Spécialité :</dt><dd>{{ meta.specialty }}</dd>
+      <dt>Diplôme :</dt><dd>{{ meta.diploma }}</dd>
+    </dl>
+
+    <div class="theme-block">
+      <div class="theme-label">— Thème —</div>
+      <div class="theme-title">{{ meta.title_fr }}</div>
+    </div>
+
+    <div class="author-block">
+      <p>Présenté par :</p>
+      <strong>{{ meta.author }}</strong>
+      <div class="supervisors">
+        <p style="margin-top:14px"><em>Encadrants :</em></p>
+        {% for s in meta.supervisors %}
+        <p>{{ s.name }} — {{ s.title }} ({{ s.role }})</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="year-line">Année Universitaire : {{ meta.year }}</div>
+  </div>
+
+  <!-- ABSTRACT -->
+  <div class="section">
+    <h2>📑 Résumé / Abstract</h2>
+    <div class="abstract-tabs">
+      <button class="abs-tab active" data-tab="fr">🇫🇷 Français</button>
+      <button class="abs-tab" data-tab="en">🇬🇧 English</button>
+    </div>
+    <div class="abs-content active" id="abs-fr">
+      {% for para in abstract_fr.split('\n\n') %}<p>{{ para }}</p>{% endfor %}
+    </div>
+    <div class="abs-content" id="abs-en">
+      {% for para in abstract_en.split('\n\n') %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  </div>
+
+  <!-- KEYWORDS -->
+  <div class="section">
+    <h2>🏷️ Mots-clés</h2>
+    <div class="keywords">
+      {% for kw in meta.keywords_fr %}
+      <span class="keyword">{{ kw }}</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- TOC -->
+  <div class="section">
+    <h2>📚 Table des matières</h2>
+    <div class="toc-list">
+      {% for num, title in chapters %}
+      <a class="toc-item" href="/memoire/chapitre/{{ num }}">
+        <span class="toc-num">Ch.{{ num }}</span>
+        <div class="toc-title">{{ title }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- MAPPING THESIS ↔ APPLICATION -->
+  <div class="section">
+    <h2>🔗 Correspondance Mémoire ↔ Application</h2>
+    <p style="color:var(--mist);margin-bottom:14px">
+      Cette table montre comment chaque concept du mémoire académique se traduit dans le code source de TreeAge AI.
+    </p>
+    <table class="mapping-tbl">
+      <thead>
+        <tr>
+          <th>Section du mémoire</th>
+          <th>Implémentation dans l'application</th>
+          <th>Fichier</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in mapping %}
+        <tr>
+          <td><strong>{{ m.thesis_section }}</strong></td>
+          <td>{{ m.app_implementation }}</td>
+          <td><code>{{ m.code_file }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>
+  document.querySelectorAll('.abs-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.abs-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.abs-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('abs-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

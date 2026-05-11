@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TreeAge AI — À Propos</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --forest:#0d1f14;--forest2:#1a3325;--accent:#2d5a3d;
+      --leaf:#4ade80;--leaf2:#86efac;--ink:#0f172a;--mist:#64748b;
+      --canvas:#f1f5f4;--card:#fff;--border:#e2e8f0;
+      --shadow:0 2px 12px rgba(0,0,0,.07);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:var(--canvas);color:var(--ink);display:flex;min-height:100vh}
+
+    /* Sidebar */
+    .sidebar{width:240px;background:var(--forest);color:#cbd5e1;position:fixed;height:100vh;
+             display:flex;flex-direction:column;z-index:100;overflow-y:auto}
+    .sb-brand{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+    .sb-logo{font-family:'DM Serif Display',serif;font-size:19px;color:var(--leaf);display:flex;align-items:center;gap:8px}
+    .sb-sub{font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);margin-top:3px;letter-spacing:1px;text-transform:uppercase}
+    .sb-nav{flex:1;padding:10px}
+    .sb-section{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;text-transform:uppercase;color:#475569;padding:12px 8px 5px}
+    .nav-link{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:7px;color:#94a3b8;
+              text-decoration:none;font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px}
+    .nav-link:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
+    .nav-link.active{background:rgba(74,222,128,.12);color:var(--leaf)}
+    .nav-link.logout{color:#f87171}.nav-link.logout:hover{background:rgba(248,113,113,.1)}
+    .sb-footer{padding:12px 18px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:#475569}
+
+    /* Main */
+    .main{margin-left:240px;flex:1}
+    .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:13px 28px;
+            display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .page-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--forest)}
+    .save-btn{padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;
+              font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:.2s}
+    .save-btn:hover{background:#1f4730}
+    .save-btn.saved{background:#15803d}
+    .content{padding:28px 32px;max-width:1100px}
+
+    /* Hero banner */
+    .hero{background:linear-gradient(135deg,var(--forest),var(--forest2));border-radius:16px;
+          padding:36px 40px;margin-bottom:28px;position:relative;overflow:hidden;color:#fff}
+    .hero::before{content:'🌳';position:absolute;right:-20px;top:-20px;font-size:130px;opacity:.06}
+    .hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+                 background:linear-gradient(90deg,var(--leaf),transparent)}
+    .hero-tag{display:inline-block;background:rgba(74,222,128,.15);border:1px solid rgba(74,222,128,.3);
+              color:var(--leaf);padding:4px 13px;border-radius:20px;font-size:10px;
+              font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+    .hero-name{font-family:'DM Serif Display',serif;font-size:34px;color:#fff;margin-bottom:6px;line-height:1.2}
+    .hero-title{font-size:14px;color:var(--leaf2);font-weight:400}
+    .hero-meta{display:flex;gap:20px;margin-top:18px;flex-wrap:wrap}
+    .hero-meta-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8}
+
+    /* Grid */
+    .grid-2{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:20px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px}
+
+    /* Panel */
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;
+           padding:24px;box-shadow:var(--shadow)}
+    .panel-head{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:14px;
+                border-bottom:1px solid var(--border)}
+    .panel-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;
+                justify-content:center;font-size:18px;flex-shrink:0}
+    .pi-green{background:rgba(74,222,128,.12)}
+    .pi-blue{background:rgba(56,189,248,.12)}
+    .pi-amber{background:rgba(251,191,36,.12)}
+    .pi-purple{background:rgba(167,139,250,.12)}
+    .panel-title{font-family:'DM Serif Display',serif;font-size:16px;color:var(--forest)}
+    .panel-sub{font-size:11px;color:var(--mist);margin-top:2px}
+
+    /* Form fields */
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+    .form-row.full{grid-template-columns:1fr;margin-bottom:14px}
+    .form-group{display:flex;flex-direction:column;gap:5px}
+    .form-label{font-size:10.5px;font-family:'DM Mono',monospace;font-weight:500;color:var(--mist);
+                text-transform:uppercase;letter-spacing:.5px}
+    .form-input{padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;
+                color:var(--ink);outline:none;transition:.2s;font-family:'Inter',sans-serif;
+                background:var(--canvas)}
+    .form-input:focus{border-color:var(--leaf);background:#fff;box-shadow:0 0 0 3px rgba(74,222,128,.1)}
+    textarea.form-input{resize:vertical;min-height:90px;line-height:1.6}
+    select.form-input{cursor:pointer}
+
+    /* Badge preview */
+    .badge-preview{background:linear-gradient(135deg,#0d1f14,#1a3325);border-radius:12px;padding:24px;
+                   display:flex;align-items:center;gap:16px;margin-bottom:20px}
+    .bp-avatar{width:60px;height:60px;border-radius:50%;background:rgba(74,222,128,.15);
+               border:2px solid rgba(74,222,128,.3);display:flex;align-items:center;justify-content:center;
+               font-size:26px;flex-shrink:0}
+    .bp-name{font-family:'DM Serif Display',serif;font-size:18px;color:#fff}
+    .bp-role{font-size:11px;color:var(--leaf2);margin-top:2px}
+    .bp-univ{font-size:11px;color:#64748b;margin-top:4px;font-family:'DM Mono',monospace}
+
+    /* Skill tags */
+    .tags-input{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border:1.5px solid var(--border);
+                border-radius:8px;background:var(--canvas);min-height:44px;cursor:text;transition:.2s}
+    .tags-input:focus-within{border-color:var(--leaf);background:#fff}
+    .tag{display:inline-flex;align-items:center;gap:5px;background:rgba(74,222,128,.12);
+         color:#15803d;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+    .tag-remove{cursor:pointer;font-size:13px;line-height:1;color:#6b7280;background:none;border:none;padding:0}
+    .tag-remove:hover{color:#dc2626}
+    .tag-new-input{border:none;outline:none;background:transparent;font-size:12px;color:var(--ink);
+                   min-width:80px;flex:1;font-family:'Inter',sans-serif}
+
+    /* Stats chips */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+    .stat-chip{background:var(--canvas);border:1px solid var(--border);border-radius:10px;
+               padding:16px;text-align:center}
+    .stat-val{font-family:'DM Serif Display',serif;font-size:26px;color:var(--forest)}
+    .stat-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);
+                text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+    /* Timeline */
+    .timeline{list-style:none;padding:0}
+    .tl-item{display:flex;gap:14px;margin-bottom:18px;position:relative}
+    .tl-item:last-child{margin-bottom:0}
+    .tl-dot{width:10px;height:10px;border-radius:50%;background:var(--leaf);flex-shrink:0;margin-top:5px}
+    .tl-dot::before{content:'';position:absolute;left:4px;top:15px;bottom:-18px;width:2px;background:var(--border)}
+    .tl-item:last-child .tl-dot::before{display:none}
+    .tl-date{font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);min-width:80px}
+    .tl-title{font-size:13px;font-weight:600;color:var(--ink)}
+    .tl-sub{font-size:11px;color:var(--mist);margin-top:2px}
+
+    /* Google Maps embed */
+    .map-preview{border-radius:10px;overflow:hidden;border:1px solid var(--border);height:200px;margin-top:14px}
+    .map-link{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;
+              background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);
+              color:#15803d;border-radius:7px;font-size:12px;font-weight:500;
+              text-decoration:none;transition:.15s;margin-top:10px}
+    .map-link:hover{background:rgba(74,222,128,.2)}
+
+    /* Success toast */
+    .toast{position:fixed;top:20px;right:20px;background:var(--forest);color:#fff;
+           padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;
+           display:none;align-items:center;gap:8px;border-left:3px solid var(--leaf);
+           box-shadow:0 8px 24px rgba(0,0,0,.2);animation:slideIn .2s ease}
+    .toast.show{display:flex}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+    /* Section divider */
+    .section-divider{display:flex;align-items:center;gap:12px;margin:24px 0 18px;color:var(--mist);font-size:12px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px}
+    .section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+    .app-version-card{background:linear-gradient(135deg,rgba(74,222,128,.08),rgba(56,189,248,.08));
+                      border:1px solid rgba(74,222,128,.2);border-radius:10px;padding:16px;margin-bottom:20px}
+    .av-title{font-size:12px;font-family:'DM Mono',monospace;color:var(--mist);text-transform:uppercase;margin-bottom:10px}
+    .av-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;
+            border-bottom:1px solid rgba(74,222,128,.1);font-size:12px}
+    .av-row:last-child{border-bottom:none}
+    .av-key{color:var(--mist)}
+    .av-val{font-family:'DM Mono',monospace;color:var(--ink);font-weight:500}
+    .av-badge{background:rgba(74,222,128,.15);color:#15803d;padding:2px 8px;border-radius:4px;font-size:10px}
+
+    @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}}
+    @media(max-width:640px){.sidebar{display:none}.main{margin-left:0}.content{padding:16px}}
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo"><span>🌳</span>TreeAge AI</div>
+    <div class="sb-sub">DZ Edition · v3.1</div>
+  </div>
+  <div class="sb-nav">
+    <div class="sb-section">Navigation</div>
+    <a class="nav-link" href="/dashboard"><span>📊</span>Tableau de bord</a>
+    <a class="nav-link" href="/map_view"><span>📍</span>Carte GPS</a>
+    <a class="nav-link active" href="/about"><span>👤</span>À Propos</a>
+    <a class="nav-link" href="/saas/plans"><span>💎</span>Plans & Tarifs</a>
+    <a class="nav-link" href="/memoire"><span>📘</span>Mémoire (Master 2)</a>
+    {% if user.role == 'admin' %}
+    <div class="sb-section">Administration</div>
+    <a class="nav-link" href="/admin"><span>⚙️</span>Admin Dashboard</a>
+    <a class="nav-link" href="/admin/users"><span>👥</span>Utilisateurs</a>
+    <a class="nav-link" href="/admin/validations"><span>✓</span>Validations</a>
+    {% endif %}
+    <div class="sb-section">Compte</div>
+    <a class="nav-link logout" href="/logout"><span>🚪</span>Déconnexion</a>
+  </div>
+  <div class="sb-footer">{{ user.email }}</div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title">👤 À Propos — Mon Profil</div>
+    <button class="save-btn" id="saveBtn" onclick="saveAll()">
+      <span id="saveBtnIcon">💾</span>
+      <span id="saveBtnText">Enregistrer</span>
+    </button>
+  </div>
+  <div class="content">
+
+    <!-- Hero preview -->
+    <div class="hero" id="heroBanner">
+      <div class="hero-tag" id="heroTag">Étudiant Chercheur</div>
+      <div class="hero-name" id="heroName">{{ about.full_name or user.name or 'Votre Nom Complet' }}</div>
+      <div class="hero-title" id="heroTitle">{{ about.thesis_title or 'Titre de votre mémoire / thèse' }}</div>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><span>🎓</span><span id="heroUniv">{{ about.university or 'Université' }}</span></div>
+        <div class="hero-meta-item"><span>📅</span><span id="heroYear">{{ about.year or '2025-2026' }}</span></div>
+        <div class="hero-meta-item"><span>🗺️</span><span id="heroCity">{{ about.city or 'Algérie' }}</span></div>
+        <div class="hero-meta-item"><span>📧</span><span id="heroEmail">{{ about.contact_email or user.email }}</span></div>
+      </div>
+    </div>
+
+    <!-- App version info -->
+    <div class="app-version-card">
+      <div class="av-title">🌳 TreeAge AI — Informations Application</div>
+      <div class="av-row"><span class="av-key">Version</span><span class="av-val">3.1 <span class="av-badge">DZ Edition</span></span></div>
+      <div class="av-row"><span class="av-key">Espèces supportées</span><span class="av-val">8 espèces algériennes</span></div>
+      <div class="av-row"><span class="av-key">Pipeline</span><span class="av-val">Allométrique non-destructif</span></div>
+      <div class="av-row"><span class="av-key">Couverture géo</span><span class="av-val">Algérie N/S/E/O — 15 régions</span></div>
+      <div class="av-row"><span class="av-key">Date de réalisation</span>
+        <span class="av-val" id="appDate">{{ about.project_date or '' }}</span></div>
+      <div class="av-row"><span class="av-key">Technologies</span><span class="av-val">Flask · MongoDB · Scikit-learn · OpenCV · PIL</span></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-chip">
+        <div class="stat-val" id="statTotal">{{ stats.total_predictions or 0 }}</div>
+        <div class="stat-label">Analyses effectuées</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-val" id="statSpecies">8</div>
+        <div class="stat-label">Espèces DZ</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-val" id="statAcc">~92%</div>
+        <div class="stat-label">Précision modèle</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- LEFT: Informations personnelles -->
+      <div>
+        <div class="section-divider">Informations Personnelles</div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-icon pi-green">👤</div>
+            <div><div class="panel-title">Identité & Contact</div><div class="panel-sub">Vos informations personnelles</div></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Prénom</label>
+              <input class="form-input" id="f_prenom" placeholder="ex: Loutfi" value="{{ about.prenom or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nom de famille</label>
+              <input class="form-input" id="f_nom" placeholder="ex: Benali" value="{{ about.nom or '' }}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email de contact</label>
+              <input class="form-input" id="f_contact_email" type="email" placeholder="ex: loutfi@email.com" value="{{ about.contact_email or user.email or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Téléphone</label>
+              <input class="form-input" id="f_phone" placeholder="ex: +213 ..." value="{{ about.phone or '' }}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Ville / Wilaya</label>
+              <input class="form-input" id="f_city" placeholder="ex: Sétif, Algérie" value="{{ about.city or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">GitHub / LinkedIn</label>
+              <input class="form-input" id="f_github" placeholder="ex: github.com/loutfi" value="{{ about.github or '' }}">
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group">
+              <label class="form-label">Bio courte</label>
+              <textarea class="form-input" id="f_bio" placeholder="Présentez-vous en quelques lignes…">{{ about.bio or '' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-divider">Informations Académiques</div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-icon pi-blue">🎓</div>
+            <div><div class="panel-title">Cursus & Mémoire</div><div class="panel-sub">Votre thèse de Master</div></div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group">
+              <label class="form-label">Titre du mémoire / thèse</label>
+              <input class="form-input" id="f_thesis_title"
+                placeholder="ex: Estimation Non-Destructive de l'Âge des Arbres par IA…"
+                value="{{ about.thesis_title or '' }}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Université / Établissement</label>
+              <input class="form-input" id="f_university" placeholder="ex: Université de Sétif 1" value="{{ about.university or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Département / Faculté</label>
+              <input class="form-input" id="f_department" placeholder="ex: Informatique — Big Data" value="{{ about.department or '' }}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Spécialité</label>
+              <input class="form-input" id="f_speciality"
+                placeholder="ex: Gestion et Analyse de Données Massives"
+                value="{{ about.speciality or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Niveau d'étude</label>
+              <select class="form-input" id="f_level">
+                <option value="">— Choisir —</option>
+                <option value="Licence" {{ 'selected' if about.level=='Licence' }}>Licence</option>
+                <option value="Master 1" {{ 'selected' if about.level=='Master 1' }}>Master 1</option>
+                <option value="Master 2" {{ 'selected' if about.level=='Master 2' }}>Master 2</option>
+                <option value="Doctorat" {{ 'selected' if about.level=='Doctorat' }}>Doctorat</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Directeur / Encadreur</label>
+              <input class="form-input" id="f_supervisor" placeholder="ex: Dr. Nom Prénom" value="{{ about.supervisor or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Co-encadreur</label>
+              <input class="form-input" id="f_co_supervisor" placeholder="ex: Dr. Nom Prénom" value="{{ about.co_supervisor or '' }}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Année académique</label>
+              <input class="form-input" id="f_year" placeholder="ex: 2025-2026" value="{{ about.year or '2025-2026' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date de soutenance</label>
+              <input class="form-input" id="f_defense_date" type="date" value="{{ about.defense_date or '' }}">
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group">
+              <label class="form-label">Résumé du projet (Abstract)</label>
+              <textarea class="form-input" id="f_abstract" rows="5"
+                placeholder="Décrivez votre projet de recherche, les objectifs, la méthodologie et les résultats…">{{ about.abstract or '' }}</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <div class="section-divider">Projet & Réalisation</div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-icon pi-amber">🔧</div>
+            <div><div class="panel-title">Réalisation du Projet</div><div class="panel-sub">Développement de TreeAge AI</div></div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group">
+              <label class="form-label">Nom du projet</label>
+              <input class="form-input" id="f_project_name" value="{{ about.project_name or 'TreeAge AI v3.1' }}" placeholder="ex: TreeAge AI">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date de début</label>
+              <input class="form-input" id="f_start_date" type="date" value="{{ about.start_date or '' }}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date de fin</label>
+              <input class="form-input" id="f_end_date" type="date" value="{{ about.end_date or '' }}">
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group">
+              <label class="form-label">Description du projet</label>
+              <textarea class="form-input" id="f_project_desc" rows="3"
+                placeholder="Système d'estimation non-destructive de l'âge des arbres…">{{ about.project_desc or '' }}</textarea>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group">
+              <label class="form-label">Technologies utilisées (appuyer Entrée pour ajouter)</label>
+              <div class="tags-input" id="techTagsContainer" onclick="document.getElementById('techTagInput').focus()">
+                {% for tech in (about.technologies or ['Flask','MongoDB','Scikit-learn','OpenCV','Python']) %}
+                <span class="tag">{{ tech }}<button class="tag-remove" onclick="removeTag(this,event)">×</button></span>
+                {% endfor %}
+                <input class="tag-new-input" id="techTagInput" placeholder="Ajouter…"
+                       onkeydown="addTagOnEnter(event)">
+              </div>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group">
+              <label class="form-label">Lien GitHub du projet</label>
+              <input class="form-input" id="f_project_url" placeholder="https://github.com/..." value="{{ about.project_url or '' }}">
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline réalisation -->
+        <div class="section-divider">Étapes de Réalisation</div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-icon pi-purple">📅</div>
+            <div><div class="panel-title">Chronologie du Projet</div><div class="panel-sub">Jalons de développement</div></div>
+          </div>
+          <ul class="timeline" id="timeline">
+            {% for step in (about.timeline or []) %}
+            <li class="tl-item">
+              <div class="tl-dot"></div>
+              <div>
+                <div class="tl-date">{{ step.date }}</div>
+                <div class="tl-title">{{ step.title }}</div>
+                <div class="tl-sub">{{ step.desc }}</div>
+              </div>
+            </li>
+            {% else %}
+            <li class="tl-item">
+              <div class="tl-dot"></div>
+              <div><div class="tl-date">Oct 2025</div><div class="tl-title">Début du projet</div><div class="tl-sub">Analyse des besoins et conception</div></div>
+            </li>
+            <li class="tl-item">
+              <div class="tl-dot"></div>
+              <div><div class="tl-date">Jan 2026</div><div class="tl-title">Pipeline IA v1.0</div><div class="tl-sub">Classification espèces + estimation d'âge</div></div>
+            </li>
+            <li class="tl-item">
+              <div class="tl-dot"></div>
+              <div><div class="tl-date">Mar 2026</div><div class="tl-title">Géo-IA Algérie</div><div class="tl-sub">8 espèces DZ, N/S/E/O, Köppen</div></div>
+            </li>
+            <li class="tl-item">
+              <div class="tl-dot"></div>
+              <div><div class="tl-date">Mai 2026</div><div class="tl-title">TreeAge AI v3.1</div><div class="tl-sub">GPS + carte + admin complet</div></div>
+            </li>
+            {% endfor %}
+          </ul>
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <button onclick="addTimelineStep()" style="padding:6px 13px;background:rgba(74,222,128,.1);
+              border:1px solid rgba(74,222,128,.3);color:#15803d;border-radius:6px;font-size:12px;cursor:pointer">
+              + Ajouter une étape
+            </button>
+          </div>
+        </div>
+
+        <!-- GPS localisation institution -->
+        <div class="section-divider">Localisation — Institution</div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-icon pi-green">📍</div>
+            <div><div class="panel-title">GPS Université / Laboratoire</div><div class="panel-sub">Affichage Google Maps</div></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Latitude</label>
+              <input class="form-input" id="f_inst_lat" placeholder="ex: 36.1913" type="number" step="0.000001" value="{{ about.institution_lat or '' }}" oninput="updateInstMap()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Longitude</label>
+              <input class="form-input" id="f_inst_lng" placeholder="ex: 5.4144" type="number" step="0.000001" value="{{ about.institution_lng or '' }}" oninput="updateInstMap()">
+            </div>
+          </div>
+          <a id="mapsLink" class="map-link" href="#" target="_blank" style="{{ '' if about.institution_lat else 'display:none' }}">
+            🗺 Voir sur Google Maps
+          </a>
+          <div style="font-size:11px;color:var(--mist);margin-top:8px" id="coordDisplay"></div>
+          <div id="instMapEmbed" class="map-preview" style="{{ '' if about.institution_lat else 'display:none' }}">
+            <iframe id="mapIframe" width="100%" height="200" frameborder="0" style="border:0" allowfullscreen loading="lazy"
+              src="{% if about.institution_lat %}https://www.google.com/maps?q={{ about.institution_lat }},{{ about.institution_lng }}&z=15&output=embed{% endif %}">
+            </iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tree GPS section -->
+    <div class="section-divider">GPS des Arbres Analysés</div>
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-icon pi-green">🌳</div>
+        <div><div class="panel-title">Localisation des Arbres sur Google Maps</div>
+             <div class="panel-sub">Après chaque prédiction avec GPS, visualisez l'arbre directement</div></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <thead>
+            <tr style="background:#f8fafc">
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);font-weight:500;border-bottom:1px solid var(--border);text-transform:uppercase">Date</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);font-weight:500;border-bottom:1px solid var(--border);text-transform:uppercase">Espèce</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);font-weight:500;border-bottom:1px solid var(--border);text-transform:uppercase">Âge</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);font-weight:500;border-bottom:1px solid var(--border);text-transform:uppercase">Latitude</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);font-weight:500;border-bottom:1px solid var(--border);text-transform:uppercase">Longitude</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);font-weight:500;border-bottom:1px solid var(--border);text-transform:uppercase">Région Algérie</th>
+              <th style="padding:9px 12px;text-align:left;font-size:10px;font-family:'DM Mono',monospace;color:var(--mist);font-weight:500;border-bottom:1px solid var(--border);text-transform:uppercase">Google Maps</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% if estimations %}
+            {% for e in estimations %}
+            {% if e.location and e.location.lat %}
+            <tr style="border-bottom:1px solid #f1f5f9">
+              <td style="padding:10px 12px;font-size:11px;color:var(--mist);font-family:'DM Mono',monospace">{{ e.date | datefmt if e.date else '—' }}</td>
+              <td style="padding:10px 12px">
+                <span>{{ e.species_emoji or '🌲' }}</span>
+                <strong style="margin-left:5px">{{ e.species_common_fr or e.species }}</strong>
+              </td>
+              <td style="padding:10px 12px;font-family:'DM Mono',monospace;font-weight:600">{{ e.estimated_age }} ans</td>
+              <td style="padding:10px 12px;font-family:'DM Mono',monospace;color:#0ea5e9">{{ '%.6f'|format(e.location.lat|float) }}°</td>
+              <td style="padding:10px 12px;font-family:'DM Mono',monospace;color:#0ea5e9">{{ '%.6f'|format(e.location.lng|float) }}°</td>
+              <td style="padding:10px 12px;font-size:11px;color:var(--mist)">{{ e.algeria_region or '—' }}</td>
+              <td style="padding:10px 12px">
+                <a href="https://www.google.com/maps?q={{ e.location.lat }},{{ e.location.lng }}&z=16"
+                   target="_blank" class="map-link" style="margin-top:0;font-size:11px">
+                  🗺 Voir
+                </a>
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="7" style="text-align:center;color:var(--mist);padding:24px;font-size:13px">
+              Aucune prédiction avec GPS pour l'instant.
+            </td></tr>
+          {% endif %}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <a href="/map_view" class="map-link" style="margin-top:0">🗺 Carte interactive complète</a>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ Informations sauvegardées avec succès</div>
+
+<!-- Timeline add modal -->
+<div id="tlModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:420px;max-width:95vw">
+    <h3 style="font-family:'DM Serif Display',serif;margin-bottom:16px;color:var(--forest)">+ Nouvelle Étape</h3>
+    <div style="margin-bottom:12px">
+      <div class="form-label" style="margin-bottom:5px">Date</div>
+      <input class="form-input" id="tlDate" placeholder="ex: Mai 2026" style="width:100%">
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="form-label" style="margin-bottom:5px">Titre</div>
+      <input class="form-input" id="tlTitle" placeholder="ex: Déploiement v3.1" style="width:100%">
+    </div>
+    <div style="margin-bottom:16px">
+      <div class="form-label" style="margin-bottom:5px">Description</div>
+      <input class="form-input" id="tlDesc" placeholder="ex: GPS + carte + admin" style="width:100%">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="confirmTlStep()" style="flex:1;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-weight:600;cursor:pointer">Ajouter</button>
+      <button onclick="document.getElementById('tlModal').style.display='none'" style="padding:10px 16px;border:1px solid var(--border);background:#fff;border-radius:7px;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const tlSteps = {{ (about.timeline or []) | tojson | safe }};
+
+// Live hero update
+function liveUpdate() {
+  const pn=v('f_prenom'), ln=v('f_nom');
+  document.getElementById('heroName').textContent = [pn,ln].filter(Boolean).join(' ') || 'Votre Nom';
+  document.getElementById('heroTitle').textContent = v('f_thesis_title') || 'Titre du mémoire';
+  document.getElementById('heroUniv').textContent  = v('f_university') || 'Université';
+  document.getElementById('heroYear').textContent  = v('f_year') || '2025-2026';
+  document.getElementById('heroCity').textContent  = v('f_city') || 'Algérie';
+  document.getElementById('heroEmail').textContent = v('f_contact_email') || '';
+  document.getElementById('heroTag').textContent   = v('f_level') || 'Étudiant Chercheur';
+  document.getElementById('appDate').textContent   = v('f_start_date') ? `${v('f_start_date')} → ${v('f_end_date')||'…'}` : '';
+}
+document.querySelectorAll('.form-input').forEach(el=>el.addEventListener('input',liveUpdate));
+
+function v(id){return (document.getElementById(id)||{}).value||''}
+
+// Tags
+function addTagOnEnter(e){
+  if(e.key!=='Enter'&&e.key!==',') return;
+  e.preventDefault();
+  const val=e.target.value.trim();
+  if(!val) return;
+  const span=document.createElement('span'); span.className='tag';
+  span.innerHTML=`${val}<button class="tag-remove" onclick="removeTag(this,event)">×</button>`;
+  document.getElementById('techTagsContainer').insertBefore(span,e.target);
+  e.target.value='';
+}
+function removeTag(btn,e){e.stopPropagation();btn.parentElement.remove()}
+function getTags(){
+  return Array.from(document.querySelectorAll('#techTagsContainer .tag'))
+    .map(t=>t.textContent.replace('×','').trim()).filter(Boolean);
+}
+
+// Map
+function updateInstMap(){
+  const lat=v('f_inst_lat'), lng=v('f_inst_lng');
+  if(!lat||!lng) return;
+  const url=`https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+  document.getElementById('mapIframe').src=url;
+  document.getElementById('instMapEmbed').style.display='block';
+  const lnk=document.getElementById('mapsLink');
+  lnk.href=`https://www.google.com/maps?q=${lat},${lng}&z=16`;
+  lnk.style.display='inline-flex';
+  document.getElementById('coordDisplay').textContent=`📍 ${parseFloat(lat).toFixed(6)}°N, ${parseFloat(lng).toFixed(6)}°E`;
+}
+updateInstMap();
+
+// Timeline
+function addTimelineStep(){
+  document.getElementById('tlDate').value='';
+  document.getElementById('tlTitle').value='';
+  document.getElementById('tlDesc').value='';
+  document.getElementById('tlModal').style.display='flex';
+}
+function confirmTlStep(){
+  const d=v('tlDate'),t=v('tlTitle'),ds=v('tlDesc');
+  if(!t){alert('Titre requis');return}
+  tlSteps.push({date:d,title:t,desc:ds});
+  renderTimeline();
+  document.getElementById('tlModal').style.display='none';
+}
+function renderTimeline(){
+  const tl=document.getElementById('timeline');
+  tl.innerHTML=tlSteps.map(s=>`
+    <li class="tl-item">
+      <div class="tl-dot"></div>
+      <div><div class="tl-date">${s.date||''}</div>
+           <div class="tl-title">${s.title}</div>
+           <div class="tl-sub">${s.desc||''}</div></div>
+    </li>`).join('');
+}
+
+// Save
+async function saveAll(){
+  const btn=document.getElementById('saveBtn');
+  const payload={
+    prenom:v('f_prenom'), nom:v('f_nom'),
+    full_name:[v('f_prenom'),v('f_nom')].filter(Boolean).join(' '),
+    contact_email:v('f_contact_email'), phone:v('f_phone'),
+    city:v('f_city'), github:v('f_github'), bio:v('f_bio'),
+    thesis_title:v('f_thesis_title'), university:v('f_university'),
+    department:v('f_department'), speciality:v('f_speciality'),
+    level:v('f_level'), supervisor:v('f_supervisor'),
+    co_supervisor:v('f_co_supervisor'), year:v('f_year'),
+    defense_date:v('f_defense_date'), abstract:v('f_abstract'),
+    project_name:v('f_project_name'), project_desc:v('f_project_desc'),
+    start_date:v('f_start_date'), end_date:v('f_end_date'),
+    project_date:v('f_start_date')+' → '+(v('f_end_date')||'…'),
+    project_url:v('f_project_url'), technologies:getTags(),
+    institution_lat:v('f_inst_lat'), institution_lng:v('f_inst_lng'),
+    timeline:tlSteps
+  };
+  try{
+    const r=await fetch('/about/save',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(r.ok){
+      document.getElementById('saveBtnIcon').textContent='✅';
+      document.getElementById('saveBtnText').textContent='Enregistré !';
+      btn.classList.add('saved');
+      const t=document.getElementById('toast'); t.classList.add('show');
+      setTimeout(()=>{t.classList.remove('show');
+        document.getElementById('saveBtnIcon').textContent='💾';
+        document.getElementById('saveBtnText').textContent='Enregistrer';
+        btn.classList.remove('saved');},3000);
+    }
+  }catch(e){alert('Erreur: '+e.message)}
+}
+
+liveUpdate();
+</script>
+</body>
+</html>
