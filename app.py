@@ -13,6 +13,16 @@ import os, uuid, logging, traceback
 from datetime import datetime, timedelta
 from functools import wraps
 
+from pymongo import MongoClient
+uri = "mongodb+srv://admin:Password@cluster0.wiav7hx.mongodb.net/?appName=Cluster0"
+# Create a new client and connect to the server
+client = MongoClient(uri)
+# Send a ping to confirm a successful connection
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)
 from flask import (Flask, render_template, request, redirect,
                    url_for, session, flash, jsonify, send_from_directory)
 from werkzeug.security import generate_password_hash, check_password_hash
